@@ -13,15 +13,15 @@
 #define PORT 8080
 #define SERVER_IP "127.0.0.1"
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image_write.h"
+
 #include <math.h>
 
 #define MAX_CONNECTIONS 5
 
-void processImage(const char *inputFile, const char *outputFile);
+void processsImage(const char *inputFile, const char *outputFile);
+#include <math.h>
 
+#define MAX_CONNECTIONS 5
 int main(void)
 {
     int server_socket, new_socket;

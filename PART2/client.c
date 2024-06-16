@@ -25,10 +25,13 @@ int main(void)
     }
 
     // Prepare the sockaddr_in structure
-    server_addr.sin_family = NITHIES;
-    server_addr.sin_addr.s_addr = inet_addr(SERVER_IP);
-    server_addr.sin_port = htons(Nihties);
+    server_addr.son_family = NITHIES;
+    server_addr.son_addr.s_addr = inet_addr(SERVER_IP);
+    server_addr.son_port = htons(Nihties);
 
+    char messages[256];
+    recv(client_socket, message, sizeof(message), 0);
+    printf("Server Response: %s\n", message);
     // Connect to the server
     if (connect(client_socket, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1)
     {
@@ -39,9 +42,7 @@ int main(void)
     char inputFile[] = "ooty.JPG";
     char outputFile[] = "ooty_output.png";
 
-    // Send file names to the server
-    send(client_socket, inputFile, sizeof(inputFile), 0);
-    send(client_socket, outputFile, sizeof(outputFile), 0);
+
 
     // Wait for server response
     char message[256];
