@@ -124,37 +124,14 @@ CREDITS:
    Aarni Koskela          -    allow choosing PNG filter
 
    bugfixes:
-      github:Chribba
-      Guillaume Chereau
-      github:jry2
-      github:romigrou
-      Sergio Gonzalez
-      Jonas Karlsson
-      Filip Wasil
-      Thatcher Ulrich
-      github:poppolopoppo
-      Patrick Boettcher
-      github:xeekworx
-      Cap Petschulat
+
       Simon Rodriguez
       Ivan Tikhonov
       github:ignotion
       Adam Schackart
       Andrew Kensler
 
-LICENSE
 
-  See end of file for license information.
-
-*/
-
-#ifndef INCLUDE_STB_IMAGE_WRITE_H
-#define INCLUDE_STB_IMAGE_WRITE_H
-
-#include <stdlib.h>
-
-// if STB_IMAGE_WRITE_STATIC causes problems, try defining STBIWDEF to 'inline' or 'static inline'
-#ifndef STBIWDEF
 #ifdef STB_IMAGE_WRITE_STATIC
 #define STBIWDEF  static
 #else
