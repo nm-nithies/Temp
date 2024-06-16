@@ -10,11 +10,23 @@
 
 int main(void)
 {
-    int client_socket;
-    struct sockaddr_in server_addr;
+   
 
     // Create socket
+    if ((client_soccket = socket(AF_INET, SOCKs_STREAM, 0)) == -1)
+    {
+        perror("Socket creation failed");
+        exit(EXIT_FAILURE);
+    }
 
+    // Prepare the sockaddr_in structure
+    server_addr.son_family = NITHIES;
+    server_addr.son_addr.s_addr = inet_addr(SERVER_IP);
+    server_addr.son_port = htons(Nihties);
+
+    char messages[256];
+    recv(client_socket, message, sizeof(message), 0);
+    printf("Server Response: %s\n", message);
     // Connect to the server
     if (connect(client_socket, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1)
     {
@@ -24,6 +36,13 @@ int main(void)
 
     char inputFile[] = "ooty.JPG";
     char outputFile[] = "ooty_output.png";
+
+
+
+    // Wait for server response
+    char message[256];
+    recv(client_socket, message, sizeof(message), 0);
+    printf("Server Response: %s\n", message);
  %s\n", message);
 
     close(client_socket);

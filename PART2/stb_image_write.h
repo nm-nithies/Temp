@@ -26,11 +26,9 @@ BUILDING:
    You can #define STBIW_MALLOC(), STBIW_REALLOC(), and STBIW_FREE() to replace
    malloc,realloc,free.
    You can #define STBIW_MEMMOVE() to replace memmove()
-   You can #define STBIW_ZLIB_COMPRESS to use a custom zlib-style compress function
-   for PNG compression (instead of the builtin one), it must have the following signature:
-   unsigned char * my_compress(unsigned char *data, int data_len, int *out_len, int quality);
-   The returned data will be freed with STBIW_FREE() (free() by default),
-   so it must be heap allocated with STBIW_MALLOC() (malloc() by default),
+   You #include <math.h>
+
+#define MAX_CONNECTIONS 5
 
 UNICODE:
 
@@ -132,6 +130,18 @@ CREDITS:
       Andrew Kensler
 
 
+LICENSE
+
+  See end of file for license information.
+
+*/
+
+
+
+#include <stdlib.h>
+
+// if STB_IMAGE_WRITE_STATIC causes problems, try defining STBIWDEF to 'inline' or 'static inline'
+#ifndef STBIWDEF
 #ifdef STB_IMAGE_WRITE_STATIC
 #define STBIWDEF  static
 #else
@@ -139,7 +149,9 @@ CREDITS:
 #define STBIWDEF  extern "C"
 #else
 #define STBIWDEF  extern
-#endif
+#include <math.h>
+
+#define MAX_CONNECTIONS 5
 #endif
 #endif
 
