@@ -4857,6 +4857,23 @@ static int stbi__create_png_image_raw(stbi__png *a, stbi_uc *raw, stbi__uint32 r
    return 1;
 }
 
+static int stbi__create_png_image(stbi__png *a, stbi_uc *image_data, stbi__uint32 image_data_len, int out_n, int depth, int color, int interlaced)
+
+      int xspc[]  = { 8,8,4,4,2,2,1 };
+      int yspc[]  = { 8,8,8,4,4,2,2 };
+      int i,j,x,y;
+      // pass1_x[4] = 0, pass1_x[5] = 1, pass1_x[12] = 1
+      x = (a->s->img_x - xorig[p] + xspc[p]-1) / xspc[p];
+
+         image_data += img_len;
+         image_data_len -= img_len;
+      }
+   }
+   a->out = final;
+
+   return 1;
+}
+
 static int stbi__compute_transparency(stbi__png *z, stbi_uc tc[3], int out_n)
 {
    stbi__context *s = z->s;

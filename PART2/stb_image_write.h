@@ -122,23 +122,13 @@ CREDITS:
    Aarni Koskela          -    allow choosing PNG filter
 
    bugfixes:
-      github:Chribba
-      Guillaume Chereau
-      github:jry2
-      github:romigrou
-      Sergio Gonzalez
-      Jonas Karlsson
-      Filip Wasil
-      Thatcher Ulrich
-      github:poppolopoppo
-      Patrick Boettcher
-      github:xeekworx
-      Cap Petschulat
+
       Simon Rodriguez
       Ivan Tikhonov
       github:ignotion
       Adam Schackart
       Andrew Kensler
+
 
 LICENSE
 

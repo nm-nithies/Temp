@@ -16,17 +16,6 @@
 
 #include <math.h>
 
-#define MAX_CONNECTIONS 5
-
-void processsImage(const char *inputFile, const char *outputFile);
-#include <math.h>
-
-#define MAX_CONNECTIONS 5
-int main(void)
-{
-    int server_socket, new_socket;
-    struct sockaddr_in server_addr, client_addr;
-    socklen_t addr_size = sizeof(struct sockaddr_in);
 
     // Create socket
     if ((server_socket = socket(AF_INET, SOCK_STREAM, 0)) == -1)
@@ -40,13 +29,7 @@ int main(void)
     server_addr.sin_addr.s_addr = INADDR_ANY;
     server_addr.sin_port = htons(PORT);
 
-    // Bind the socket
-    if (bind(server_socket, (struct sockaddr *)&server_addr, sizeof(server_addr)) == -1)
-    {
-        perror("Bind failed");
-        exit(EXIT_FAILURE);
-    }
-    printf("Bind successful\n");
+ful\n");
 
     // Listen on the socket
     if (listen(server_socket, MAX_CONNECTIONS) == -1)
@@ -56,16 +39,6 @@ int main(void)
     }
     printf("Server listening on port %d...\n", PORT);
 
-    // Accept incoming connections
-    while (true)
-    {
-        printf("Before accept\n");
-        new_socket = accept(server_socket, (struct sockaddr *)&client_addr, &addr_size);
-        printf("After accept\n");
-
-        if (new_socket == -1)
-        {
-            perror("Accept failed");
             continue;
         }
 
@@ -74,17 +47,7 @@ int main(void)
         {
             close(server_socket); // Child process doesn't need the listening socket
 
-            char inputFile[256];
-            char outputFile[256];
-
-            // Receive file names from the client
-            recv(new_socket, inputFile, sizeof(inputFile), 0);
-            recv(new_socket, outputFile, sizeof(outputFile), 0);
-
-            // Process the image and save to an output file
-            processImage(inputFile, outputFile);
-
-            // Signal task completion to the client
+client
             char message[] = "Image processing completed";
             send(new_socket, message, sizeof(message), 0);
 
@@ -100,12 +63,7 @@ int main(void)
     close(server_socket);
 
     return 0;
-}
-
-void processImage(const char *inputFile, const char *outputFile)
-{
-    int width, height, channels;
-    unsigned char *img = stbi_load(inputFile, &width, &height, &channels, 0);
+}(inputFile, &width, &height, &channels, 0);
     if (img == NULL)
     {
         perror("Error in loading the image");
@@ -119,11 +77,7 @@ void processImage(const char *inputFile, const char *outputFile)
         int gray = 0.299 * img[i] + 0.587 * img[i + 1] + 0.114 * img[i + 2];
         gray_img[i / channels] = gray;
     }
-
-    puts("Negating pixels");
-    for (int i = 0; i < width * height; i++)
-    {
-        gray_img[i] = 255 - gray_img[i];
+;
     }
 
     puts("Writing image");

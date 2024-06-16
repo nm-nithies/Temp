@@ -6,12 +6,7 @@
 #include <winsock2.h>
 #include <windows.h>
 #include <inet.h>
-#include<endian.h>
-
-#define SERVER_IP "127.0.0.1"  // Replace with your server's IP address
-#define PORT 8080               // Replace with your server's port number
-
-
+#include<endian.h
 
 int main(void)
 {
@@ -48,6 +43,7 @@ int main(void)
     char message[256];
     recv(client_socket, message, sizeof(message), 0);
     printf("Server Response: %s\n", message);
+ %s\n", message);
 
     close(client_socket);
 

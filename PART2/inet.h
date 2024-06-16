@@ -64,19 +64,7 @@
 #define ntohl(x)	__htobe32(x)
 #endif
 
-#ifndef	_UINT16_T_DEFINED_
-#define	_UINT16_T_DEFINED_
-typedef	__uint16_t	uint16_t;
-#endif
-
-#ifndef	_UINT32_T_DEFINED_
-#define	_UINT32_T_DEFINED_
-typedef	__uint32_t	uint32_t;
-#endif
-
-#ifndef	_SOCKLEN_T_DEFINED_
-#define	_SOCKLEN_T_DEFINED_
-typedef	__socklen_t	socklen_t;	/* length type for network syscalls */
+ngth type for network syscalls */
 #endif
 
 #ifndef _IN_TYPES_DEFINED_
