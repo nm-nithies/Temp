@@ -1,1 +1,1 @@
- 10 : INVALID_GRAPH : This is an invalid model. In Node, ("MMCVModulatedDeformConv2d_76", MMCVModulatedDeformConv2d, "mmcv", -1) : ("onnx::Conv_858": tensor(float),"offset": tensor(float),"mask": tensor(float),"backbone.layer3.0.conv2.weight": tensor(float),) -> ("input.196": tensor(float),) , Error Node (MMCVModulatedDeformConv2d_76) has input size 4 not in range [min=5, max=5].
+FAIL : Failed to add kernel for MMCVModulatedDeformConv2d mmcv CPUExecutionProvider: Conflicting with a registered kernel with op versions.
