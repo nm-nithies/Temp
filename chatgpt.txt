@@ -1,1 +1,12 @@
-FAIL : Failed to add kernel for MMCVModulatedDeformConv2d mmcv CPUExecutionProvider: Conflicting with a registered kernel with op versions.
+
+
+
+def MMCVModulatedDeformConv2d(*args, **kwargs):
+    # Support both 4 or 5 input forms
+    if len(args) == 4:
+        input, offset, mask, weight = args
+        bias = None
+    elif len(args) == 5:
+        input, offset, mask, weight, bias = args
+    else:
+        raise RuntimeError(f"Expected 4 or 5 inputs, got {len(args)}")
