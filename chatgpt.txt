@@ -1,12 +1,39 @@
+import torch
+import torch.nn as nn
+from mmcv.ops import ModulatedDeformConv2dPack
 
+class DeformConvBNModel(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.deform_conv = ModulatedDeformConv2dPack(
+            in_channels=256,
+            out_channels=256,
+            kernel_size=3,
+            padding=1,
+            stride=1,
+            bias=False
+        )
+        self.bn = nn.BatchNorm2d(256)
 
+    def forward(self, x):
+        return self.bn(self.deform_conv(x))
 
-def MMCVModulatedDeformConv2d(*args, **kwargs):
-    # Support both 4 or 5 input forms
-    if len(args) == 4:
-        input, offset, mask, weight = args
-        bias = None
-    elif len(args) == 5:
-        input, offset, mask, weight, bias = args
-    else:
-        raise RuntimeError(f"Expected 4 or 5 inputs, got {len(args)}")
+# Initialize the model
+model = DeformConvBNModel()
+model.eval()
+
+# Dummy input
+x = torch.randn(1, 256, 57, 100)
+
+# Export to ONNX
+torch.onnx.export(
+    model,
+    x,
+    "deform_conv_bn.onnx",
+    opset_version=11,
+    input_names=["input"],
+    output_names=["output"],
+    dynamic_axes={"input": {0: "batch_size"}, "output": {0: "batch_size"}}
+)
+
+print("Exported to deform_conv_bn.onnx")
