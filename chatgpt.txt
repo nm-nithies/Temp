@@ -1,1 +1,3 @@
-onnxruntime.capi.onnxruntime_pybind11_state.RuntimeException: [ONNXRuntimeError] : 6 : RUNTIME_EXCEPTION : Non-zero status code returned while running Mul node. Name:'/encoder/layers.0/attentions.1/Mul' Status Message: /hdd2/lucia/build_onnxruntime_1.19/onnxruntime/onnxruntime/core/providers/cpu/math/element_wise_ops.h:540 void onnxruntime::BroadcastIterator::Init(ptrdiff_t, ptrdiff_t) axis == 1 || axis == largest was false. Attempting to broadcast an axis by a dimension other than 1. 256 by 40000
+ Replace subgraph with ScatterND operations with subgraph with Slice/Concat operations
+ Fuse RMSNormalization
+Legalize Swin_Transformer_mmlab FullyConnected+WindownShift subgraph
