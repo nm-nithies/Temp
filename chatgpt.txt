@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from mmcv.ops import ModulatedDeformConv2dPack
+import os
 
 # Shared parameters
 in_channels = 3
@@ -8,31 +9,26 @@ out_channels = 8
 kernel_size = 3
 padding = 1
 
-# Helper to manually set BN params
 def set_bn_params(bn, weight, bias, running_mean, running_var):
     bn.weight.data.copy_(weight)
     bn.bias.data.copy_(bias)
     bn.running_mean.copy_(running_mean)
     bn.running_var.copy_(running_var)
 
-# Create shared weights
+# Shared weights and BN params
 shared_weight = torch.randn(out_channels, in_channels, kernel_size, kernel_size)
 shared_bias = torch.randn(out_channels)
-
-# Shared BatchNorm parameters
 bn_weight = torch.randn(out_channels)
 bn_bias = torch.randn(out_channels)
 bn_mean = torch.randn(out_channels)
-bn_var = torch.abs(torch.randn(out_channels)) + 1e-5  # ensure positive
+bn_var = torch.abs(torch.randn(out_channels)) + 1e-5
 
-# Model 1: Conv + BN
 class ConvBN(nn.Module):
     def __init__(self):
         super().__init__()
         self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, padding=padding, bias=True)
         self.bn = nn.BatchNorm2d(out_channels)
-        
-        # Load shared weights
+
         self.conv.weight.data.copy_(shared_weight)
         self.conv.bias.data.copy_(shared_bias)
         set_bn_params(self.bn, bn_weight, bn_bias, bn_mean, bn_var)
@@ -40,40 +36,56 @@ class ConvBN(nn.Module):
     def forward(self, x):
         return self.bn(self.conv(x))
 
-# Model 2: MMCVModulatedDeformConv2d + BN
 class DeformConvBN(nn.Module):
     def __init__(self):
         super().__init__()
         self.deform_conv = ModulatedDeformConv2dPack(in_channels, out_channels, kernel_size, padding=padding, bias=True)
         self.bn = nn.BatchNorm2d(out_channels)
 
-        # Load shared weights
         self.deform_conv.weight.data.copy_(shared_weight)
         self.deform_conv.bias.data.copy_(shared_bias)
         set_bn_params(self.bn, bn_weight, bn_bias, bn_mean, bn_var)
 
-    def forward(self, x):
-        # Create dummy offsets and masks
-        dtype = x.dtype
-        device = x.device
-        N, _, H, W = x.shape
-        offset_channels = 2 * kernel_size * kernel_size
-        mask_channels = kernel_size * kernel_size
-        total_offset_mask = offset_channels + mask_channels
-
-        offset_mask = torch.zeros(N, total_offset_mask, H, W, dtype=dtype, device=device)
-        offset = offset_mask[:, :offset_channels]
-        mask = torch.sigmoid(offset_mask[:, offset_channels:])  # make mask in (0,1)
-
-        out = self.deform_conv(x, offset, mask)
-        return self.bn(out)
+    def forward(self, x, offset, mask):
+        return self.bn(self.deform_conv(x, offset, mask))
 
 # Instantiate models
 model1 = ConvBN()
 model2 = DeformConvBN()
 
-# Test with dummy input
+# Dummy inputs
 x = torch.randn(1, in_channels, 32, 32)
-out1 = model1(x)
-out2 = model2(x)
-print("Max diff:", (out1 - out2).abs().max().item())
+
+# For deform conv
+offset_channels = 2 * kernel_size * kernel_size
+mask_channels = kernel_size * kernel_size
+total_offset_mask = offset_channels + mask_channels
+offset = torch.zeros(1, offset_channels, 32, 32)
+mask = torch.sigmoid(torch.zeros(1, mask_channels, 32, 32))
+
+# Export paths
+os.makedirs("onnx_exports", exist_ok=True)
+
+torch.onnx.export(
+    model1,
+    x,
+    "onnx_exports/conv_bn.onnx",
+    input_names=["input"],
+    output_names=["output"],
+    opset_version=11,
+    do_constant_folding=True,
+    verbose=False
+)
+
+torch.onnx.export(
+    model2,
+    (x, offset, mask),
+    "onnx_exports/deformconv_bn.onnx",
+    input_names=["input", "offset", "mask"],
+    output_names=["output"],
+    opset_version=11,
+    do_constant_folding=True,
+    verbose=False
+)
+
+print("ONNX export completed for both models.")
