@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from mmcv.ops import ModulatedDeformConv2dPack
+from mmcv.ops import ModulatedDeformConv2d
 import os
 
 # Optional: For reproducibility
@@ -48,7 +48,7 @@ class ConvBN(nn.Module):
 class DeformConvBN(nn.Module):
     def __init__(self):
         super().__init__()
-        self.deform = ModulatedDeformConv2dPack(
+        self.deform = ModulatedDeformConv2d(
             in_channels, out_channels, kernel_size, padding=padding, bias=True
         )
         self.bn = nn.BatchNorm2d(out_channels)
@@ -94,4 +94,4 @@ torch.onnx.export(
     do_constant_folding=True
 )
 
-print("✅ Both ONNX models exported to 'onnx_exports/' folder.")
+print("✅ Exported both models to: onnx_exports/")
