@@ -1,3 +1,1 @@
- Replace subgraph with ScatterND operations with subgraph with Slice/Concat operations
- Fuse RMSNormalization
-Legalize Swin_Transformer_mmlab FullyConnected+WindownShift subgraph
+Fold BatchNormalization into DeformConv/MMCVModulatedDeformConv2d
