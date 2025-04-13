@@ -1,97 +1,11 @@
-import torch
-import torch.nn as nn
-from mmcv.ops import ModulatedDeformConv2d
-import os
+# We register the op `mmcvmodulateddeformedconv2d` with 4-input support:
+# inputs = [input, offset, mask, weight]
+# This is used when the convolution does not have a bias term.
 
-# Optional: For reproducibility
-torch.manual_seed(42)
+# For supporting bias, we register a separate op `mmcvmodulateddeformedconv2dwithBias`
+# with 5-input support:
+# inputs = [input, offset, mask, weight, bias]
 
-# Model input/output shapes
-in_channels = 256
-out_channels = 256
-kernel_size = 3
-padding = 1
-H, W = 57, 100
-
-# Random Conv weights & bias (shared between models)
-shared_weight = torch.randn(out_channels, in_channels, kernel_size, kernel_size)
-shared_bias = torch.randn(out_channels)
-
-# Random BN parameters in range [0.1, 0.9] (shared)
-bn_weight = torch.empty(out_channels).uniform_(0.1, 0.9)
-bn_bias = torch.empty(out_channels).uniform_(0.1, 0.9)
-bn_mean = torch.empty(out_channels).uniform_(0.1, 0.9)
-bn_var = torch.empty(out_channels).uniform_(0.1, 0.9)
-
-# Utility function to assign BN params
-def set_bn_params(bn, weight, bias, mean, var):
-    bn.weight.data.copy_(weight)
-    bn.bias.data.copy_(bias)
-    bn.running_mean.copy_(mean)
-    bn.running_var.copy_(var)
-
-# Model 1: Standard Conv2d + BN
-class ConvBN(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, padding=padding, bias=True)
-        self.bn = nn.BatchNorm2d(out_channels)
-
-        self.conv.weight.data.copy_(shared_weight)
-        self.conv.bias.data.copy_(shared_bias)
-        set_bn_params(self.bn, bn_weight, bn_bias, bn_mean, bn_var)
-
-    def forward(self, x):
-        return self.bn(self.conv(x))
-
-# Model 2: MMCV ModulatedDeformConv2d + BN
-class DeformConvBN(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.deform = ModulatedDeformConv2d(
-            in_channels, out_channels, kernel_size, padding=padding, bias=True
-        )
-        self.bn = nn.BatchNorm2d(out_channels)
-
-        self.deform.weight.data.copy_(shared_weight)
-        self.deform.bias.data.copy_(shared_bias)
-        set_bn_params(self.bn, bn_weight, bn_bias, bn_mean, bn_var)
-
-    def forward(self, x, offset, mask):
-        return self.bn(self.deform(x, offset, mask))
-
-# Instantiate both models
-conv_bn_model = ConvBN()
-deform_bn_model = DeformConvBN()
-
-# Dummy inputs
-x = torch.randn(1, in_channels, H, W)
-offset = torch.zeros(1, 2 * kernel_size * kernel_size, H, W)  # (1, 18, 57, 100)
-mask = torch.sigmoid(torch.zeros(1, kernel_size * kernel_size, H, W))  # (1, 9, 57, 100)
-
-# Export directory
-os.makedirs("onnx_exports", exist_ok=True)
-
-# Export Conv + BN model
-torch.onnx.export(
-    conv_bn_model,
-    x,
-    "onnx_exports/conv_bn.onnx",
-    input_names=["input"],
-    output_names=["output"],
-    opset_version=11,
-    do_constant_folding=True
-)
-
-# Export DeformConv + BN model
-torch.onnx.export(
-    deform_bn_model,
-    (x, offset, mask),
-    "onnx_exports/deformconv_bn.onnx",
-    input_names=["input", "offset", "mask"],
-    output_names=["output"],
-    opset_version=11,
-    do_constant_folding=True
-)
-
-print("✅ Exported both models to: onnx_exports/")
+# Note: Both ops share the same implementation logic; the only difference is the
+# number of inputs (and the name used during registration). This separation allows
+# flexibility depending on whether the bias is present in the model.
