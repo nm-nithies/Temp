@@ -1,11 +1,43 @@
-# We register the op `mmcvmodulateddeformedconv2d` with 4-input support:
-# inputs = [input, offset, mask, weight]
-# This is used when the convolution does not have a bias term.
+I have a pattern 
+unsqueeze unsqueeze unsqueeze unsqueeze 
+    |____________|____________|___________|
+                              |
+                        Concat
+                             |
+                         Transpose
+       ______________|___________________
+     |              |            |             |
+gather   gather   gather    gather 
 
-# For supporting bias, we register a separate op `mmcvmodulateddeformedconv2dwithBias`
-# with 5-input support:
-# inputs = [input, offset, mask, weight, bias]
+TO
 
-# Note: Both ops share the same implementation logic; the only difference is the
-# number of inputs (and the name used during registration). This separation allows
-# flexibility depending on whether the bias is present in the model.
+unsqueeze unsqueeze unsqueeze unsqueeze 
+    |____________|____________|___________|
+                              |
+                        Concat
+       ______________|___________________
+     |                |            |          |
+Trans         Trans      Trans    Trans 
+   |                |             |           |
+gather   gather   gather    gather 
+
+
+
+
+Unsqueeze  Unsqueeze  Unsqueeze  Unsqueeze
+     \        |         |         /
+       \      |         |        /
+         \    |         |       /
+            Concat(axis=0)
+   
+                 |         
+            Trans      
+               |      
+         Gather 
+
+To
+
+Unsqueeze  Unsqueeze  Unsqueeze  Unsqueeze
+     |___________|_____________|_____________|
+                                |
+                         trans 
