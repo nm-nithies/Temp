@@ -1,18 +1,1 @@
-#            input
-#              |
-#              |\
-#              | Pow (Y=2)
-#              |    |
-#              | ReduceMean (axes=1)
-#              |    |
-#              |   Add (epsilon)
-#              |    |
-#              |   Sqrt
-#              |    |
-#              |   Div
-#              |    |
-#              |   Mul
-#              |    |
-#              \   Mul (gamma)
-#                   |
-#                 output
+RMSNorm is introduced in Opset 23, but the latest ONNX Runtime version 1.21.1 only supports up to Opset 22.
