@@ -30,3 +30,5 @@ Fixed the max_diff issues and able to legalize the model
 Uploaded the legalized model in onnx_models_repo
 Added comments and unit test for this new pass FuseBNIntoMMCVModulatedDeformConv2d
 Cleaned and  pushed the code
+
+Legalize Swin_Transformer_mmlab FullyConnected+WindownShift subgraph
