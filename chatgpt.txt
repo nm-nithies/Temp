@@ -1,34 +1,6 @@
-Fixed the bevformer_tiny_epoch24 model legalization issue
-MR - https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/1004
- 
-For RMSNormalization 
-Pushed the code and marked this MR  as draft for now
-MR -https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/1003
- 
-Started working on re-exporting the Fcos3d model
-
-RMS_Normalization in LLama2-7B:
-Added a new pass for FusePrimitivesIntoRMSNorm.
-In nnac , changed the opset version to 23 to support RMSNorm. 
-But faced some conflict issues with the opset version 23. and the latest onnx-runtime version(1.21.1)
-I think the opset version is still in development
-Yvonne Chen How can I proceed with this
-
-ScatternND replacement :
-Checked the Jira ticket and check the possiblity to replace scatterND with slice and concat Ops.
-Paused this task for now
- 
-RemoveConcatAndGather Pass:
-Found the issue ( len(unsqueeze) did not match len(gather) )and fixed the bug for now(len(unsqueeze). Pushed the updated code
-MR - https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/999
- 
- RMS_Normalization in LLama2-7B:
-Checked the possibility to fuse this RMS Norm pattern into RMS normalization Op
-Started adding a new pass for RMS Normalization Fusion
- 
-Fixed the max_diff issues and able to legalize the model
-Uploaded the legalized model in onnx_models_repo
-Added comments and unit test for this new pass FuseBNIntoMMCVModulatedDeformConv2d
-Cleaned and  pushed the code
-
-Legalize Swin_Transformer_mmlab FullyConnected+WindownShift subgraph
+torch                    1.11.0+cu113
+torchvision              0.12.0+cu113
+mmcv                     2.0.0
+mmdet                    3.0.0
+mmdet3d                  1.1.1
+mmengine                 0.7.4
