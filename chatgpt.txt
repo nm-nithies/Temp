@@ -1,1 +1,109 @@
-TypeError: The annotations loaded from annotation file should be a dict, but got <class 'list'>!
+# Copyright 2023-2025 Synopsys, Inc.
+# This Synopsys software and all associated documentation are proprietary
+# to Synopsys, Inc. and may only be used pursuant to the terms and conditions
+# of a written license agreement with Synopsys, Inc.
+# All other use, reproduction, modification, or distribution of the Synopsys
+# software or the associated documentation is strictly prohibited.
+
+from onnxruntime_extensions import onnx_op, PyCustomOpDef
+import torch
+import torchvision.ops
+import torch.nn.functional as F
+
+from nnac.core.log import Logger
+
+logger = Logger("CUSTOM_OP")
+
+
+MMCV_DOMAIN = 'mmcv'
+
+# Not fully validated; this register is only used as temp workaround
+# TODO: The Op should be replaced with ONNX Opset19 DeformConv Op in legalization later
+
+# FIXME: ONNXRuntime doesn't have corresponding support yet: https://github.com/microsoft/onnxruntime/issues/15572
+
+
+def new_custom_op_register():
+
+    # https://mmcv.readthedocs.io/en/latest/_modules/mmcv/ops/deform_conv.html
+    # ->
+    # https://pytorch.org/vision/main/generated/torchvision.ops.deform_conv2d.html#deform-conv2d
+
+    # FIXME: groups and deform_groups not used
+
+    # FIXME: See errors like https://github.com/microsoft/onnxruntime-extensions/issues/74
+    # [E:onnxruntime:, inference_session.cc:2044 operator()] Exception during initialization:
+    # Unable to find attribute 'bias' due to 'Attribute name and type don't match'.
+
+    # FIXME: Hard-code the attributes to different data types as workaround
+    # Users need to modify the hardcoded attributes to match Op's values now
+
+    @onnx_op(
+        op_type=MMCV_DOMAIN + "::MMCVDeformConv2d",
+        inputs=[
+            PyCustomOpDef.dt_float,
+            PyCustomOpDef.dt_float,
+            PyCustomOpDef.dt_float,
+        ],
+        outputs=[PyCustomOpDef.dt_float],
+        # attrs=["bias", "deform_groups", "dilation", "groups", "im2col_step", "padding", "stride"],
+        domain=MMCV_DOMAIN,
+    )
+    def MMCVDeformConv2d(input, offset, weight, **kwargs):
+        x = torchvision.ops.deform_conv2d(
+            input=torch.from_numpy(input),
+            offset=torch.from_numpy(offset),
+            weight=torch.from_numpy(weight),
+            # bias=int(kwargs["bias"]),
+            # stride=int(kwargs["stride"]),
+            # padding=int(kwargs["padding"]),
+            # dilation=int(kwargs["dilation"]),
+            # bias=torch.Tensor(0),  # Need to have matching size with the Op
+            stride=(1, 1),
+            padding=(1, 1),
+            dilation=(1, 1)
+        )
+        return x.detach().cpu().numpy()
+    try:
+        from mmcv.ops import ModulatedDeformConv2d
+
+        @onnx_op(
+            op_type=MMCV_DOMAIN + "::MMCVModulatedDeformConv2d",
+            inputs=[
+                PyCustomOpDef.dt_float,
+                PyCustomOpDef.dt_float,
+                PyCustomOpDef.dt_float,
+                PyCustomOpDef.dt_float,
+            ],
+            outputs=[PyCustomOpDef.dt_float],
+            domain=MMCV_DOMAIN,
+        )
+        def MMCVModulatedDeformConv2d(input, offset, mask, weight, **kwargs):
+            input = torch.from_numpy(input)
+            offset = torch.from_numpy(offset)
+            weight = torch.from_numpy(weight)
+            mask = torch.from_numpy(mask)
+            modulated_conv = ModulatedDeformConv2d(
+                in_channels=weight.shape[1],
+                out_channels=weight.shape[0],
+                kernel_size=(weight.shape[2], weight.shape[3]),
+                padding=1
+            )
+            modulated_conv.weight.data = weight
+            return modulated_conv(input, offset, mask)
+    except ImportError:
+        print("Warning: mmcv is not installed. ModulatedDeformConv2d registration is ignored.")
+
+    @onnx_op(
+        op_type=MMCV_DOMAIN + "::grid_sampler",
+        inputs=[
+            PyCustomOpDef.dt_float,
+            PyCustomOpDef.dt_float,
+        ],
+        outputs=[PyCustomOpDef.dt_float],
+        domain=MMCV_DOMAIN,
+    )
+    def grid_sampler(input_tensor, grid):
+        x = F.grid_sample(input=torch.from_numpy(input_tensor), grid=torch.from_numpy(grid),
+                          align_corners=True, mode='bilinear', padding_mode="zeros")
+        return x.detach().cpu().numpy()
