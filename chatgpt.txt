@@ -1,11 +1,12 @@
-        scale_offset, scale_depth, scale_size = scale[0:3]
+scale_offset, scale_depth, scale_size = scale[0:3]
 
-        clone_bbox = bbox.clone()
-        bbox[:, :2] = scale_offset(clone_bbox[:, :2]).float()
-        bbox[:, 2] = scale_depth(clone_bbox[:, 2]).float()
-        bbox[:, 3:6] = scale_size(clone_bbox[:, 3:6]).float()
-        bbox[:, 2] = bbox[:, 2].exp()
-        bbox[:, 3:6] = bbox[:, 3:6].exp()
-        bbox[:, :2] *= stride
+clone_bbox = bbox.clone()
 
-        return bbox
+offset = scale_offset(clone_bbox[:, :2]).float() * stride
+depth = scale_depth(clone_bbox[:, 2:3]).float().exp()
+size = scale_size(clone_bbox[:, 3:6]).float().exp()
+
+# Reconstruct bbox without in-place updates to avoid ScatterND
+bbox = torch.cat([offset, depth, size], dim=1)
+
+return bbox
