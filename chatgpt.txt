@@ -1,32 +1,4 @@
-### Details for FCOS3D.onnx
+python tools/test.py /configs/fcos3d/fcos3d_r101-caffe-dcn_fpn_head-gn_8xb2
+-1x_nus-mono3d.py ckpts/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d_20210715_235813-4bed5239.pth
 
-Original repo: https://github.com/open-mmlab/mmdetection3d/tree/main
-
-Config: https://github.com/open-mmlab/mmdetection3d/blob/main/configs/fcos3d/fcos3d_r101-caffe-dcn_fpn_head-gn_8xb2-1x_nus-mono3d.py
-  
-Requirements to export model, setup the environment following https://github.com/open-mmlab/mmdetection3d/blob/main/docs/en/get_started.md:
-torch                    1.11.0+cu113
-torchvision              0.12.0+cu113
-mmcv                     2.0.0
-mmdet                    3.0.0
-mmdet3d                  1.1.1        
-mmengine                 0.7.4
-
-
-
-Command to generate optimized model:
-```
-mwnnconvert -m FCOS3D.onnx --custom_op fcos3d_custom_op_register.py
-```  
-
-ONNX model was re-exported with 1x3x900x1600 - model name FCOS3D_1x3x900x1600.onnx
-
-To use mmscv_custom_op_register.py, do pip install mmcv
-
-Command to generate optimized model:
-```
-nnac.py -m FCOS3D_1x3x900x1600.onnx --legalize_enable_pass ConvertDynamicReshapeToStatic  ApplySlim --quantize No --convert_custom_op nnac/converter/onnx2mwnn/mmcv_custom_op_register.py
-```
-
-The respective details regarding model export and legalization can be found in:
-https://jira.internal.synopsys.com/browse/P10019563-73791
+python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./data/nuscenes --extra-tag nuscenes
