@@ -1,68 +1,7 @@
-# FCOS3D Model
+Successfully added the MoveWindowReverseUpwardToAttention pass
+Added Unit test and comments to the pass
+Optimized the code and yet to push it. Upload the Optimized model in
 
-Jira : https://jira.internal.synopsys.com/browse/P10019563-73791
-Original repo: https://github.com/open-mmlab/mmdetection3d/tree/main
+Resolved the mmcv package install issue and added FCOS3D model into regression(using pytest) 
 
-## Environment setup 
-
-Requirements to export model, setup the environment following https://github.com/open-mmlab/mmdetection3d/blob/main/docs/en/get_started.md:
-
-torch                    1.11.0+cu113
-torchvision              0.12.0+cu113
-mmcv                     2.0.0
-mmdet                    3.0.0
-mmdet3d                  1.1.1        
-mmengine                 0.7.4
-
-mandatory to install requiremnets - https://github.com/open-mmlab/mmdetection3d/tree/main/requirements
-
-You can also use source repo for mmcv, mmdeploy, mmengine and checkout to respective versions
-```
-cd mmdeploy
-pip install -v -e .
-
-cd mmcv
-pip install -v -e .
-
-cd mmengine
-pip install -v -e .
-```
-
-## Dataset Preparation 
-Command to nuscenes Dataset Preparation:
-```
-python tools/create_data.py nuscenes --root-path ./data/nuscenes --out-dir ./data/nuscenes --extra-tag nuscenes
-``` 
-It is mandortary to clean the dataset
-check - https://mmdetection3d.readthedocs.io/en/latest/advanced_guides/datasets/nuscenes.html
-
-## Fcos3d Repo README
-
-README - https://github.com/open-mmlab/mmdetection3d/blob/main/configs/fcos3d/README.md
-
-## Command to pytorch inference and model-export:
-dowload pth - https://download.openmmlab.com/mmdetection3d/v0.1.0_models/fcos3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d_20210715_235813-4bed5239.pth
-
-config - Config: https://github.com/open-mmlab/mmdetection3d/blob/main/configs/fcos3d/fcos3d_r101-caffe-dcn_fpn_head-gn_8xb2-1x_nus-mono3d.py
-
-```
-python tools/test.py /configs/fcos3d/fcos3d_r101-caffe-dcn_fpn_head-gn_8xb2
--1x_nus-mono3d.py /path/to/fcos3d_r101_caffe_fpn_gn-head_dcn_2x8_1x_nus-mono3d_20210715_235813-4bed5239.pth
-```  
-Apply mmdetection3d.patch in mmmmdetection3d repo and mmengine.patch in mmengine.patch to export the model
-
-## Command to Legalize the model :
-```
-python nnac.py -m path/to/FCOS3D_1x3x900x1600.onnx --legalize_enable_pass ConvertDynamicReshapeToStatic  ApplySlim --quantize No --convert_custom_op nnac/converter/onnx2mwnn/mmcv_custom_op_register.py
-
-```  
-To use mmscv_custom_op_register.py, do pip install mmcv
-
-## Command to generate optimized model:
-```
-nnac.py -m FCOS3D_1x3x900x1600.onnx --legalize_enable_pass ConvertDynamicReshapeToStatic  ApplySlim --quantize No --convert_custom_op nnac/converter/onnx2mwnn/mmcv_custom_op_register.py
-```
-## NOTE:
-Uploaded exported model -  FCOS3D_1x3x900x1600.onnx 
-Uploaded legalized model - FCOS3D_1x3x900x1600_optimized.onnx
-Uploaded mmdetection3d.patch, mmengine.patch files
+Legalization failure caused by onnx-simplifier
