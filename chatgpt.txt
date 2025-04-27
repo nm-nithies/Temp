@@ -1,7 +1,1 @@
-Successfully added the MoveWindowReverseUpwardToAttention pass
-Added Unit test and comments to the pass
-Optimized the code and yet to push it. Upload the Optimized model in
-
-Resolved the mmcv package install issue and added FCOS3D model into regression(using pytest) 
-
-Legalization failure caused by onnx-simplifier
+This optimization fuses mmcv_modulated_deform_conv2d (without bias) followed by BatchNorm into a single mmcv_modulated_deform_conv2d with bias.
