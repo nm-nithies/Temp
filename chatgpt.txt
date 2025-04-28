@@ -1,1 +1,18 @@
+import onnx
+from onnxsim import simplify
+
+# Load your ONNX model
+model_path = "input_model.onnx"
+model = onnx.load(model_path)
+
+# Simplify the model
+model_simplified, check = simplify(model)
+
+# Check if the simplified model is valid
+if check:
+    print("Simplification successful!")
+    # Save the simplified model
+    onnx.save(model_simplified, "output_model.onnx")
+else:
+    print("Simplification failed!")
 This optimization fuses mmcv_modulated_deform_conv2d (without bias) followed by BatchNorm into a single mmcv_modulated_deform_conv2d with bias.
