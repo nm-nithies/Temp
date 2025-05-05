@@ -1,3 +1,1 @@
-# logger.debug(
-        #     "[DEBUG] replace preprocessing nodes {} to {} by Mul and Add node".format(layer, concat_layer)
-        # )
+Faced multiple challenges while implementing the fusion pass involving a combined MatMul and Add operation, followed by a Split. The key issues were dimension mismatches during the split and the presence of hanging nodes in the graph.
