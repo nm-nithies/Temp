@@ -1,1 +1,2 @@
-Faced multiple challenges while implementing the fusion pass involving a combined MatMul and Add operation, followed by a Split. The key issues were dimension mismatches during the split and the presence of hanging nodes in the graph.
+usage: sng4onnx [-h] -if INPUT_ONNX_FILE_PATH -of OUTPUT_ONNX_FILE_PATH [-n]
+sng4onnx: error: unrecognized arguments: -ion onnx::Mul_3063 -oon Mul_2637
