@@ -1,19 +1,20 @@
-Input: (B, T, D_in)
+Input: (..., D_in)
           ┌───────────────┴───────────────┐
        MatMul1 (W₁: D_in×D_A)        MatMul2 (W₂: D_in×D_B)
           |                               |
        Add1 (b₁: D_A)                  Add2 (b₂: D_B)
           |                               |
-       Output A (B,T,D_A)             Output B (B,T,D_B)
+     Output A (..., D_A)             Output B (..., D_B)
 
-Input: (B, T, D_in)
+
+Input: (..., D_in)
                    |
-          MatMul_fused (W_fused: D_in×(D_A+D_B))  ← [W₁∣W₂]
+          MatMul_fused (W_fused: D_in×(D_A+D_B))
                    |
-             Add_fused (b_fused: D_A+D_B)         ← [b₁∣b₂]
+             Add_fused (b_fused: D_A+D_B)
                    |
-           Output_fused (B,T,D_A+D_B)
+           Output_fused (..., D_A+D_B)
                    |
                Split (dim=-1)
           ┌──────────┴──────────┐
-Output A (B,T,D_A)      Output B (B,T,D_B)
+     Output A (..., D_A)    Output B (..., D_B)
