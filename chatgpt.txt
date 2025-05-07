@@ -1,13 +1,18 @@
-def get_constants(curr_layer_output, matmul_inits, add_inits):
-    """Append and return all parallel MatMul and Add constants in a list
-    """
-    mul_const = []
-    add_const = []
-    for layer in curr_layer_output:
-        if layer in matmul_inits:
-            mul_const.append(matmul_inits[layer])
-            add_const.append(add_inits[layer])
+                        X
+             ___________|___________
+            |           |           |
+          MatMul      MatMul      ....
+            |           |           |
+           Add         Add        ....
+            |           |           |
+            A           B         ....
 
-    return mul_const, add_const
 
-Maybe consider to add such methods into single layer script as common method, instead of adding it in several passes for multiple times.
+to :
+
+
+                       X
+                       |
+                     Matmul
+
+Better to show that this MatMul's dimension differ from above (how they relate to each other)
