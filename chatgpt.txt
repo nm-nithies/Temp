@@ -1,1 +1,35 @@
- Non-zero status code returned while running DequantizeLinear node. Name:'output_0_dq/bias/duplicated' Status Message: /onnxruntime_src/onnxruntime/core/providers/common.h:31 int64_t onnxruntime::HandleNegativeAxis(int64_t, int64_t) IsAxisInRange(axis, tensor_rank) was false. axis 1 is not in valid range [-1,0]
+FuseMultipleMatMulAndAdd pass:
+The regression has failed around 6 models due to conflicts between SplitMatMulAdd pass
+Disabled this pass for all the failed models. Regression Passed.
+ 
+QDQ legalization pass to resolve Conv's Bias use fp32 values issue:
+Added  the pass to convert fp32 conv bias to int32.
+Legalization failed due to max_diff after convertion int32 convertion. Currently debugging this
+
+
+dn_model_c_subgraph1000:
+Found the issue is caused in RemoveIdentity_Add pass(broadcast issue) and Fixed it. Pushed the code.
+
+ 
+FuseMultipleMatMulAndAdd pass:
+
+MR is ready to merge.
+ 
+Stared working on adding support to QDQ legalization pass to resolve Conv's Bias use fp32 values issue.
+
+FuseMultipleMatMulAndAdd pass:
+Fixed the legalization issue in dttp_decoder model and re-pushed the code.
+
+PoseNet-MobileNet:
+Fixed the qdq layer issues in RemovePairedTransposes pass. Pushed the code
+
+
+
+Faced multiple challenges while implementing the fusion pass involving a combined MatMul and Add operation, followed by a Split. Faced issues were dimension mismatches during the split and the presence of hanging nodes in the graph.
+Successfully added FuseMultipleMatMulAndAdd pass support
+Added unit test and comments, Optimized and pushed the code. Triggered the build
+Build failed to dttp_decoder model. This pass need further fix.
+
+
+
+Worked on adding a new pass for fusing multiple matmul and add branch into one. Faced issues with output mismatch. Currently working on figuring out the order of appending the constants
