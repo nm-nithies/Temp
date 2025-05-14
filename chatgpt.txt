@@ -1,2 +1,3 @@
-// Convert Conv bias from float to int by inserting a dequantize layer.
-// Ensures bias is compatible with quantized Conv inputs and weights.
+[WARNING] (ir_utils.py) ONNX.CHECKER ERROR: Nodes in a graph must be topologically sorted, however input 'onnx::Slice_4929' of node: 
+name: onnx::Add_4960_slice_Add OpType: Add
+ is not output of any previous nodes.
