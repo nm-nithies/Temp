@@ -1,3 +1,32 @@
-[WARNING] (ir_utils.py) ONNX.CHECKER ERROR: Nodes in a graph must be topologically sorted, however input 'onnx::Slice_4929' of node: 
-name: onnx::Add_4960_slice_Add OpType: Add
- is not output of any previous nodes.
+Nithies:
+Bevformer_tiny_epoch_24:
+Found the warning issue in the in FuseMatMulAddSlice pass. Fixed it and push the code.
+Faced regression issue. Yet to Fix it
+ 
+ConvertConvBiasFp32toInt32 pass:
+Moved the pass under qdq related passes. Currently this pass need some enhancement after this change.
+
+
+
+FuseMultipleMatMulAndAdd pass:
+Fixed the legalization issues. MR closed
+Updated the output shape of MatMul 
+MR -https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/1033
+ 
+ConvertConvBiasFp32toInt32 pass:
+Fixed the legalization issues
+
+FuseMultipleMatMulAndAdd pass:
+Resolved all MR comments and pushed the code
+Added a NewPattern in FuseMultipleMatMulAndAdd pass. Cleaned and pushed the code. Triggered  the build
+Uploaded the optimized model in - https://gitsnps.internal.synopsys.com/dwc_ev/onnx_models/-/blob/main/public/BEVFormer_tiny/standard_latest_cleanup/bevformer_tiny_epoch_24_optimized.onnx.
+ 
+ConvertConvBiasFp32toInt32 pass:
+Added Unit test for this pass and added comments
+Cleaned and pushed the code.
+
+Fixed the bugs in SplitMatMulAdd pass. Also disabled the SplitMatMulAdd pass defaulty
+Push the code.
+ 
+ConvertConvBiasFp32toInt32:
+Optimized the code and pushed it
