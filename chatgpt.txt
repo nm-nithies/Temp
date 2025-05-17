@@ -1,32 +1,31 @@
-Nithies:
-Bevformer_tiny_epoch_24:
-Found the warning issue in the in FuseMatMulAddSlice pass. Fixed it and push the code.
-Faced regression issue. Yet to Fix it
- 
-ConvertConvBiasFp32toInt32 pass:
-Moved the pass under qdq related passes. Currently this pass need some enhancement after this change.
+import onnx
+from onnxsim import simplify
+from onnx import helper, numpy_helper
+import numpy as np
 
+filename = 'bevformer_tiny_epoch_24_optimized.onnx'
 
+model = onnx.load(filename)
 
-FuseMultipleMatMulAndAdd pass:
-Fixed the legalization issues. MR closed
-Updated the output shape of MatMul 
-MR -https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/1033
- 
-ConvertConvBiasFp32toInt32 pass:
-Fixed the legalization issues
+def set_constant_input(model, input_name, constant_value):
+  input = next((inp for inp in model.graph.input if inp.name == input_name), None)
+  if not input:
+    raise ValueError(f"Input '{input_name}' not found in the model.")
 
-FuseMultipleMatMulAndAdd pass:
-Resolved all MR comments and pushed the code
-Added a NewPattern in FuseMultipleMatMulAndAdd pass. Cleaned and pushed the code. Triggered  the build
-Uploaded the optimized model in - https://gitsnps.internal.synopsys.com/dwc_ev/onnx_models/-/blob/main/public/BEVFormer_tiny/standard_latest_cleanup/bevformer_tiny_epoch_24_optimized.onnx.
- 
-ConvertConvBiasFp32toInt32 pass:
-Added Unit test for this pass and added comments
-Cleaned and pushed the code.
+  model.graph.input.remove(input)
+  input_shape = [dim.dim_value for dim in input.type.tensor_type.shape.dim]
+  tensor = numpy_helper.from_array(np.full(input_shape, constant_value, dtype=np.float32), name=input_name)
+  model.graph.initializer.append(tensor)
+  
+set_constant_input(model, 'use_prev_bev', 0)
+set_constant_input(model, 'prev_bev', 0)
 
-Fixed the bugs in SplitMatMulAdd pass. Also disabled the SplitMatMulAdd pass defaulty
-Push the code.
- 
-ConvertConvBiasFp32toInt32:
-Optimized the code and pushed it
+onnx.checker.check_model(model)
+onnx.save(model, 'bevformer_tiny_epoch_24_use_prev_bev_false.onnx')
+
+model = onnx.load(filename)
+
+set_constant_input(model, 'use_prev_bev', 1)
+
+onnx.checker.check_model(model)
+onnx.save(model, 'bevformer_tiny_epoch_24_use_prev_bev_true.onnx')
