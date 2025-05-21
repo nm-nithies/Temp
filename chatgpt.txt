@@ -1,8 +1,103 @@
-from sne4onnx import extraction
- 
-extracted_graph = extraction(
-  input_op_names=['/embed_tokens/Gather'],
-  output_op_names=['/transformer_layers.0/self_attn/q_proj/MatMul'],
-  input_onnx_file_path='/home/sanjay/Downloads/1-3_float.onnx',
-  output_onnx_file_path='/home/sanjay/Downloads/mod_1-3_float.onnx',
+# Copyright 2023-2025 Synopsys, Inc.
+# This Synopsys software and all associated documentation are proprietary
+# to Synopsys, Inc. and may only be used pursuant to the terms and conditions
+# of a written license agreement with Synopsys, Inc.
+# All other use, reproduction, modification, or distribution of the Synopsys
+# software or the associated documentation is strictly prohibited.
+
+import networkx as nx
+
+from nnac.core.log import Logger
+from .single_layer_transforms import (
+    remove_one_layer,
+    fetch_pred_layer0,
+    check_layer_type,
+    get_single_predecessor,
+    get_constant_value
 )
+
+logger = Logger("OPTIMIZATION")
+
+
+def RemoveRedundantSlice(opt):
+    G = opt.G
+    tensorDict = opt.TensorDict
+    shapeDict = opt.ShapeDict
+
+    layers = list(nx.topological_sort(G))
+    for layer in layers:
+        if layer not in G.nodes:
+            continue
+        if not check_layer_type(G, layer, "Slice"):
+            continue
+
+        reshape_layer = get_single_predecessor(G, layer)
+        if reshape_layer is None or not check_layer_type(G, reshape_layer, "Reshape"):
+            continue
+
+        concat_layer = get_single_predecessor(G, reshape_layer)
+
+        concat_axis = G.nodes[concat_layer]['attr_dict']['axis']
+        if concat_layer is None or not check_layer_type(G, concat_layer, "Concat"):
+            continue
+
+        unsqueeze_layers = G.nodes[concat_layer]['input']
+        if len(unsqueeze_layers) < 1:
+            continue
+
+        if not check_concat_axis(opt, G, unsqueeze_layers, concat_axis):
+            continue
+
+        unsqueeze_pred = None
+        if check_unsqueeze_contains_same_pred(opt, G, unsqueeze_layers):
+            unsqueeze_pred = fetch_pred_layer0(G, unsqueeze_layers[0])
+        else:
+            slice_inputs = G.nodes[layer]["input"]
+            if len(slice_inputs) < 3:
+                continue
+
+            starts = tensorDict.get(slice_inputs[1], None).astype(int)
+            ends = tensorDict.get(slice_inputs[2], None).astype(int)
+
+            if ends-starts != [1] or starts >= len(unsqueeze_layers):
+                continue
+
+            unsqueeze_pred = fetch_pred_layer0(G, unsqueeze_layers[starts[0]])
+
+        if len(shapeDict[unsqueeze_pred]) != len(shapeDict[layer]):
+            continue
+
+        slice_succs = list(G.successors(layer))
+        if len(slice_succs) > 0:
+            for slice_succ in slice_succs:
+                for index in range(len(G.nodes[slice_succ]['input'])):
+                    if G.nodes[slice_succ]['input'][index] == layer:
+                        G.nodes[slice_succ]['input'][index] = unsqueeze_pred
+                        G.add_edge(unsqueeze_pred, slice_succ)
+
+        remove_one_layer(opt, layer)
+        opt.passes_counter["RemoveRedundantSlice"] += 1
+
+
+def check_concat_axis(opt, G, unsqueeze_layers, concat_axis):
+    for node in unsqueeze_layers:
+        if not check_layer_type(G, node, "Unsqueeze"):
+            return False
+        node_axis = get_constant_value(opt, G.nodes[node]['input'])
+
+        if node_axis.astype(int) != concat_axis:
+            return False
+
+    return True
+
+
+def check_unsqueeze_contains_same_pred(opt, G, unsqueeze_layers):
+    unsqueeze_pred = set()
+    for node in unsqueeze_layers:
+        unsqueeze_pred.add(fetch_pred_layer0(G, node))
+
+    if len(unsqueeze_pred) == 1:
+        return True
+
+    return False
+
