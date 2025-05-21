@@ -1,1 +1,8 @@
-Remove Mul operations if the constant operand is zero, and also remove any unnecessary predecessor nodes connected to the Mul
+from sne4onnx import extraction
+ 
+extracted_graph = extraction(
+  input_op_names=['/embed_tokens/Gather'],
+  output_op_names=['/transformer_layers.0/self_attn/q_proj/MatMul'],
+  input_onnx_file_path='/home/sanjay/Downloads/1-3_float.onnx',
+  output_onnx_file_path='/home/sanjay/Downloads/mod_1-3_float.onnx',
+)
