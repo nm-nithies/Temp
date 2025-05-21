@@ -1,1 +1,1 @@
-Removes Slice if its output matches the input to the Unsqueeze layers used in the preceding Concat, followed by a Reshape.
+The data being sliced must **match the input** originally provided to the `Unsqueeze` layers.
