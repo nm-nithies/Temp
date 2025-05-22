@@ -1,16 +1,2 @@
-Slice selects only the part of the concatenated tensor corresponding to input B (based on start, end, and axes).
-Thus, Y can be directly connected to B, and the Slice, Reshape, Concat, and associated Unsqueeze ops can be safely removed.
-
-    A           B
-      |           |
-  Unsqueeze   Unsqueeze
-      |           |
-      |___________|
-           |
-         Concat
-           |
-         Reshape
-           |
-         Slice
-           |
-           Y
+Slice Op can be removed, if the output is equal to either (input A OR input B)
+based on Slice parameters start, end, and axes.
