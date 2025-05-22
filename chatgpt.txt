@@ -1,38 +1,16 @@
-Remove Slice if its sliced output matches the input to the Unsqueeze layers used in the preceding Concat,
-followed by a Reshape
+Slice selects only the part of the concatenated tensor corresponding to input B (based on start, end, and axes).
+Thus, Y can be directly connected to B, and the Slice, Reshape, Concat, and associated Unsqueeze ops can be safely removed.
 
-Pattern1(a):
-
-                   X
-                   |
-         _______________________
-        |                       |
-    Unsqueeze              Unsqueeze
-        |                       |
-        |_______________________|
-                   |
-                Concat
-                   |
-                Reshape
-                   |
-                Slice
-                   |
-                   Y
-
-to
-
-                   X
-                   |
-         ________________________
-        |          |            |
-    Unsqueeze   Unsqueeze       |
-        |          |            |
-        |__________|            |
-                   |            |
-                Concat          |
-                   |            |
-                Reshape         |
-                   |            |
-                   Y____________|
-
-Note: The data being sliced from Slice must **match the input** originally provided to the Unsqueeze layers.
+    A           B
+      |           |
+  Unsqueeze   Unsqueeze
+      |           |
+      |___________|
+           |
+         Concat
+           |
+         Reshape
+           |
+         Slice
+           |
+           Y
