@@ -1,2 +1,1 @@
-Slice Op can be removed, if the output is equal to either (input A OR input B)
-based on Slice parameters start, end, and axes.
+The Slice operation can be removed if its output is equal to either input A or input B, as determined by the start, end, and axes parameters.
