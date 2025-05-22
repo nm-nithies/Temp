@@ -1,20 +1,38 @@
-import torch
- 
-# Step 1: Create input tensor with shape (6, 2500, 256)
-x = torch.randn(6, 2500, 256)
- 
-# Step 2: Unsqueeze on axis 1 -> (6, 1, 2500, 256)
-x_unsqueezed = x.unsqueeze(1)
- 
-# Step 3: Concat with itself on axis 1 -> (6, 2, 2500, 256)
-x_concat = torch.cat([x_unsqueezed, x_unsqueezed], dim=1)
- 
-# Step 4: Reshape to (12, 2500, 256)
-x_reshaped = x_concat.reshape(12, 2500, 256)
- 
-# Step 5: Slice first 6 elements on axis 0 -> (6, 2500, 256)
-x_sliced = x_reshaped[:6]
- 
-# Compare x and x_sliced
-are_equal = torch.allclose(x, x_sliced)
-print("Are x and x_sliced the same?", are_equal)
+Remove Slice if its sliced output matches the input to the Unsqueeze layers used in the preceding Concat,
+followed by a Reshape
+
+Pattern1(a):
+
+                   X
+                   |
+         _______________________
+        |                       |
+    Unsqueeze              Unsqueeze
+        |                       |
+        |_______________________|
+                   |
+                Concat
+                   |
+                Reshape
+                   |
+                Slice
+                   |
+                   Y
+
+to
+
+                   X
+                   |
+         ________________________
+        |          |            |
+    Unsqueeze   Unsqueeze       |
+        |          |            |
+        |__________|            |
+                   |            |
+                Concat          |
+                   |            |
+                Reshape         |
+                   |            |
+                   Y____________|
+
+Note: The data being sliced from Slice must **match the input** originally provided to the Unsqueeze layers.
