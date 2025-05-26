@@ -1,1 +1,1 @@
-Legalize: Merge common subgraphs
+The removeConstant pass currently supports removal of constant Add, Concat, Reshape, Unsqueeze, and Cast operations. Support for additional operators will be added in future updates.
