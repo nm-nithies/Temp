@@ -1,49 +1,274 @@
-import torch
-import torch.nn as nn
-import torch.onnx
-import onnx
-from onnx import shape_inference
+# Copyright 2023-2025 Synopsys, Inc.
+# This Synopsys software and all associated documentation are proprietary
+# to Synopsys, Inc. and may only be used pursuant to the terms and conditions
+# of a written license agreement with Synopsys, Inc.
+# All other use, reproduction, modification, or distribution of the Synopsys
+# software or the associated documentation is strictly prohibited.
 
-class CustomGraph(nn.Module):
-    def __init__(self):
-        super(CustomGraph, self).__init__()
-        self.constant = nn.Parameter(torch.tensor([1.0, 2.0, 3.0]), requires_grad=False)
+import networkx as nx
+import numpy as np
 
-    def forward(self, x):
-        # x is input tensor of shape [B, 3, 2] (example shape)
-        const_add = self.constant + 1.0                         # [3]
-        unsqueezed = const_add.unsqueeze(0)                     # [1, 3]
-        concat = torch.cat([unsqueezed, unsqueezed], dim=0)     # [2, 3]
-        reshaped = concat.reshape(1, 6)                          # [1, 6]
+from nnac.core.log import Logger
+from .single_layer_transforms import (
+    check_layer_type,
+    get_constant_value,
+    compare_inputs,
+)
 
-        transposed = x.transpose(1, 2)                           # e.g., [B, 2, 3]
-        transposed_flat = transposed.reshape(1, 6)               # match shape with reshaped
+logger = Logger("OPTIMIZATION")
 
-        added = reshaped + transposed_flat                      # [1, 6]
-        multiplied = added * 2.0                                # [1, 6]
-        return multiplied
 
-# Create dummy input
-dummy_input = torch.randn(1, 3, 2)  # Adjust as needed
+def remove_single_occurance(dict1):
+    dict1 = {k: v for k, v in dict1.items() if v != 1}
+    return dict1
 
-# Instantiate model
-model = CustomGraph()
 
-# Export to ONNX
-onnx_path = "custom_graph.onnx"
-torch.onnx.export(model, dummy_input, onnx_path,
-                  input_names=['input'], output_names=['output'],
-                  opset_version=13, dynamic_axes={'input': {0: 'batch_size'}})
+def replace_commom_node(common_layers, G):
+    remove_nodes = []
+    replace_layer = common_layers[0]
 
-# Load and run shape inference
-onnx_model = onnx.load(onnx_path)
-inferred_model = shape_inference.infer_shapes(onnx_model)
+    for index in range(1, len(common_layers)):
+        succs = list(G.successors(common_layers[index]))
+        for succ in succs:
+            for index_2 in range(len(G.nodes[succ]['input'])):
+                if G.nodes[succ]['input'][index_2] == common_layers[index]:
+                    G.nodes[succ]['input'][index_2] = replace_layer
+                    G.add_edge(replace_layer, succ)
 
-# Save inferred model (optional)
-inferred_path = "custom_graph_inferred.onnx"
-onnx.save(inferred_model, inferred_path)
+        remove_nodes.append(common_layers[index])
 
-# Print inferred output shape
-for output in inferred_model.graph.output:
-    print(f"Output name: {output.name}")
-    print(f"Shape: {[dim.dim_value for dim in output.type.tensor_type.shape.dim]}")
+    for node in remove_nodes:
+        G.remove_node(node)
+
+
+def FuseCommonSubgraph(opt):
+    G = opt.G
+    tensordict = opt.TensorDict
+
+    layers = list(nx.topological_sort(G))
+    for layer in layers:
+        if layer not in G.nodes or G.nodes[layer].get("op_type", None) == "Input" or not G.nodes[layer] or \
+           'input' not in G.nodes[layer]:
+            continue
+
+        if check_layer_type(G, layer, "Split"):
+            continue
+
+        layer_succs = list(G.successors(layer))
+        if len(layer_succs) < 2:
+            continue
+
+        dict1 = {}
+        dict2 = {}
+
+        for layer_succ in layer_succs:
+            optype = G.nodes[layer_succ].get("op_type", None)
+            if optype in dict1:
+                dict1[optype] += 1
+                dict2[optype].append(layer_succ)
+            else:
+                dict1[optype] = 1
+                dict2[optype] = [layer_succ]
+
+        dict1 = remove_single_occurance(dict1)
+        if not dict1:
+            continue
+
+        for optype in dict1.keys():
+            found_common_subgraph = False
+            if optype == "ReduceSum":
+                if compare_reducesum_layers(dict2[optype], opt, G):
+                    found_common_subgraph = True
+
+            elif optype == "Greater":
+                if compare_greater_layers(dict2[optype], opt, G):
+                    found_common_subgraph = True
+
+            elif optype == "Transpose":
+                if compare_transpose_layers(dict2[optype], G):
+                    found_common_subgraph = True
+
+            elif optype == "Cast":
+                if compare_cast_layers(dict2[optype], G):
+                    found_common_subgraph = True
+
+            elif optype == "Clip":
+                if compare_clip_layers(dict2[optype], opt, G):
+                    found_common_subgraph = True
+
+            elif optype == "Unsqueeze":
+                if compare_unsqueeze_layers(dict2[optype], opt, G):
+                    found_common_subgraph = True
+
+            elif optype == "Div":
+                if compare_div_layers(dict2[optype], opt, G):
+                    found_common_subgraph = True
+
+            elif optype == "Add":
+                if compare_add_layers(dict2[optype], opt, G):
+                    found_common_subgraph = True
+
+            elif optype == "Mul":
+                if compare_mul_layers(dict2[optype], opt, G):
+                    found_common_subgraph = True
+
+            elif optype == "Sub":
+                if compare_sub_layers(dict2[optype], opt, G):
+                    found_common_subgraph = True
+
+            elif optype == "BatchNormalization":
+                if compare_batchnormalization_layers(dict2[optype], tensordict, G):
+                    found_common_subgraph = True
+
+            elif optype == "Reshape":
+                if compare_reshape_layers(dict2[optype], opt, G):
+                    found_common_subgraph = True
+
+            if optype in dict1 and found_common_subgraph:
+                replace_commom_node(dict2[optype], G)
+                opt.passes_counter["FuseCommonSubgraph"] += 1
+
+
+def compare_reshape_layers(reshape_layers, opt, G):
+    shape = get_constant_value(opt, G.nodes[reshape_layers[0]]["input"])
+    for index in range(1, len(reshape_layers)):
+        if not np.array_equal(get_constant_value(opt, G.nodes[reshape_layers[index]]["input"]), shape):
+            return False
+
+    return True
+
+
+def compare_reducesum_layers(reducesum_layers, opt, G):
+    reducesum_axes = get_constant_value(opt, G.nodes[reducesum_layers[0]]["input"])
+    for index in range(1, len(reducesum_layers)):
+        if get_constant_value(opt, G.nodes[reducesum_layers[index]]["input"])!= reducesum_axes:
+            return False
+
+    return True
+
+
+def compare_greater_layers(greater_layers, opt, G):
+    constant_input = get_constant_value(opt, G.nodes[greater_layers[0]]["input"])
+    for index in range(1, len(greater_layers)):
+        if get_constant_value(opt, G.nodes[greater_layers[index]]["input"]) != constant_input:
+            return False
+
+    return True
+
+
+def compare_transpose_layers(transpose_layers, G):
+    perm = G.nodes[transpose_layers[0]]['attr_dict']['perm']
+    for index in range(1, len(transpose_layers)):
+        if G.nodes[transpose_layers[index]]['attr_dict']['perm'] != perm:
+            return False
+
+    return True
+
+
+def compare_cast_layers(cast_layers, G):
+    to_attr = G.nodes[cast_layers[0]]['attr_dict']['to']
+    for index in range(1, len(cast_layers)):
+        if G.nodes[cast_layers[index]]['attr_dict']['to'] != to_attr:
+            return False
+
+    return True
+
+
+def compare_clip_layers(clip_layers, opt, G):
+    min = get_constant_value(opt, G.nodes[clip_layers[0]]["input"])
+    for index in range(1, len(clip_layers)):
+        if get_constant_value(opt, G.nodes[clip_layers[index]]["input"]) != min:
+            return False
+
+    return True
+
+
+def compare_unsqueeze_layers(unsqueeze_layers, opt, G):
+    axes = get_constant_value(opt, G.nodes[unsqueeze_layers[0]]["input"])
+    for index in range(1, len(unsqueeze_layers)):
+        if not np.array_equal(get_constant_value(opt, G.nodes[unsqueeze_layers[index]]["input"]), axes):
+            return False
+
+    return True
+
+
+def compare_batchnormalization_layers(bnorm_layers, tensordict, G):
+    scale = tensordict[G.nodes[bnorm_layers[0]]["input"][1]]
+    bias = tensordict[G.nodes[bnorm_layers[0]]["input"][2]]
+    mean = tensordict[G.nodes[bnorm_layers[0]]["input"][3]]
+    var = tensordict[G.nodes[bnorm_layers[0]]["input"][4]]
+    for index in range(1, len(bnorm_layers)):
+        if not np.array_equal(tensordict[G.nodes[bnorm_layers[index]]["input"][1]], scale):
+            return False
+        if not np.array_equal(tensordict[G.nodes[bnorm_layers[index]]["input"][2]], bias):
+            return False
+        if not np.array_equal(tensordict[G.nodes[bnorm_layers[index]]["input"][3]], mean):
+            return False
+        if not np.array_equal(tensordict[G.nodes[bnorm_layers[index]]["input"][4]], var):
+            return False
+
+    return True
+
+
+def compare_div_layers(div_layers, opt, G):
+    constant_input = get_constant_value(opt, G.nodes[div_layers[0]]["input"])
+    if constant_input is None:
+        for index in range(1, len(div_layers)):
+            if not compare_inputs(G, div_layers[0], div_layers[index]):
+                return False
+
+        return True
+
+    for index in range(1, len(div_layers)):
+        if not np.array_equal(get_constant_value(opt, G.nodes[div_layers[index]]["input"]), constant_input):
+            return False
+
+    return True
+
+
+def compare_add_layers(add_layers, opt, G):
+    constant_input = get_constant_value(opt, G.nodes[add_layers[0]]["input"])
+    if constant_input is None:
+        for index in range(1, len(add_layers)):
+            if not compare_inputs(G, add_layers[0], add_layers[index]):
+                return False
+
+        return True
+
+    for index in range(1, len(add_layers)):
+        if not np.array_equal(get_constant_value(opt, G.nodes[add_layers[index]]["input"]), constant_input):
+            return False
+
+    return True
+
+
+def compare_mul_layers(mul_layers, opt, G):
+    constant_input = get_constant_value(opt, G.nodes[mul_layers[0]]["input"])
+    if constant_input is None:
+        for index in range(1, len(mul_layers)):
+            if not compare_inputs(G, mul_layers[0], mul_layers[index]):
+                return False
+
+        return True
+
+    for index in range(1, len(mul_layers)):
+        if not np.array_equal(get_constant_value(opt, G.nodes[mul_layers[index]]["input"]), constant_input):
+            return False
+
+    return True
+
+
+def compare_sub_layers(sub_layers, opt, G):
+    constant_input = get_constant_value(opt, G.nodes[sub_layers[0]]["input"])
+    if constant_input is None:
+        for index in range(1, len(sub_layers)):
+            if not compare_inputs(G, sub_layers[0], sub_layers[index]):
+                return False
+
+        return True
+
+    for index in range(1, len(sub_layers)):
+        if not np.array_equal(get_constant_value(opt, G.nodes[sub_layers[index]]["input"]), constant_input):
+            return False
+
+    return True
