@@ -272,3 +272,7 @@ def compare_sub_layers(sub_layers, opt, G):
             return False
 
     return True
+
+
+
+ # Checks if all Mul layers have the same constant input or identical non-constant inputs
