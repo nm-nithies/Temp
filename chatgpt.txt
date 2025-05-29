@@ -275,4 +275,4 @@ def compare_sub_layers(sub_layers, opt, G):
 
 
 
- # Checks if all Mul layers have the same constant input or identical non-constant inputs
+Combine identical subgraphs into a single shared structure
