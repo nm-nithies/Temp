@@ -1,47 +1,12 @@
- if optype == "ReduceSum":
-                if compare_reducesum_layers(dict2[optype], opt, G):
-                    found_common_subgraph = True
-
-            elif optype == "Greater":
-                if compare_greater_layers(dict2[optype], opt, G):
-                    found_common_subgraph = True
-
-            elif optype == "Transpose":
-                if compare_transpose_layers(dict2[optype], G):
-                    found_common_subgraph = True
-
-            elif optype == "Cast":
-                if compare_cast_layers(dict2[optype], G):
-                    found_common_subgraph = True
-
-            elif optype == "Clip":
-                if compare_clip_layers(dict2[optype], opt, G):
-                    found_common_subgraph = True
-
-            elif optype == "Unsqueeze":
-                if compare_unsqueeze_layers(dict2[optype], opt, G):
-                    found_common_subgraph = True
-
-            elif optype == "Div":
-                if compare_div_layers(dict2[optype], opt, G):
-                    found_common_subgraph = True
-
-            elif optype == "Add":
-                if compare_add_layers(dict2[optype], opt, G):
-                    found_common_subgraph = True
-
-            elif optype == "Mul":
-                if compare_mul_layers(dict2[optype], opt, G):
-                    found_common_subgraph = True
-
-            elif optype == "Sub":
-                if compare_sub_layers(dict2[optype], opt, G):
-                    found_common_subgraph = True
-
-            elif optype == "BatchNormalization":
-                if compare_batchnormalization_layers(dict2[optype], tensordict, G):
-                    found_common_subgraph = True
-
-            elif optype == "Reshape":
-                if compare_reshape_layers(dict2[optype], opt, G):
-                    found_common_subgraph = True
+ReduceSum
+Greater
+Transpose
+Cast
+Clip
+Unsqueeze
+Div
+Add
+Mul
+Sub
+BatchNormalization
+Reshape
