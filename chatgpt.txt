@@ -1,12 +1,17 @@
-ReduceSum
-Greater
-Transpose
-Cast
-Clip
-Unsqueeze
-Div
-Add
-Mul
-Sub
-BatchNormalization
-Reshape
+Worked on adding a new pass to remove consatant nodes in bevformer_tiny_epoch_24
+
+Fixed the legalization issue for conformer model.
+Add a support to remove constants from bevformer_tiny_epoch_24.
+Facing issue to slice the constant subgraph from model .Due to this unit test is not added yet.
+
+Fixed the legalization issues, added unit test for RemoveConstant Pass
+Started working on adding new pass for Merge common subgraphs
+
+Successfully added a FuseCommanSubgraph pass support to NNAC
+Yet to add additional check conditions to the optimized the pass.
+
+ixed all the issues faced in the regression. Added Unit test for this
+skipped this pass in the first round of legalization due to conflicts with other pass
+Optimized the pass and pushed the code.
+
+IndexError in RemoveConcatAndGather Function
