@@ -1,10 +1,1 @@
-elif optype == "InstanceNormalization":
-    found_common_subgraph = True
-elif optype == "LayerNormalization":
-    found_common_subgraph = True
-elif optype == "LpNormalization":
-    found_common_subgraph = True
-elif optype == "MeanVarianceNormalization":
-    found_common_subgraph = True
-elif optype == "GroupNormalization":
-    found_common_subgraph = True
+Deprecated: Functionality moved to <NewPassName>
