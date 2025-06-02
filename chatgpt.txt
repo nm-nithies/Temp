@@ -1,2 +1,10 @@
-add support for replacing an input of the graph with a tensor initialized with a constant value
-add support for replacing an input of the graph with a constant tensor passed by the user
+import onnx
+
+model = onnx.load("model.onnx")
+graph = model.graph
+
+# All initializers (i.e., constant tensors)
+initializer_names = set(init.name for init in graph.initializer)
+
+# Inputs that are initialized with constants
+constant_inputs = [inp for inp in graph.input if inp.name in initializer_names]
