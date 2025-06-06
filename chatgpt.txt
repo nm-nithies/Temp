@@ -1,7 +1,2 @@
-import onnx.defs
-
-def get_all_onnx_ops():
-    return {op_name for op_name, _ in onnx.defs.get_all_schemas_with_history()}
-
-onnx_ops = get_all_onnx_ops()
-print("Conv" in onnx_ops) 
+add support for replacing an input of the graph with a tensor initialized with a constant value
+add support for replacing an input of the graph with a constant tensor passed by the user
