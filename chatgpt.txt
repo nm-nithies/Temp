@@ -1,2 +1,11 @@
-add support for replacing an input of the graph with a tensor initialized with a constant value
-add support for replacing an input of the graph with a constant tensor passed by the user
+def can_concat(shape1, shape2, axis):
+    if len(shape1) != len(shape2):
+        return False  # Rank mismatch
+
+    for i in range(len(shape1)):
+        if i == axis:
+            continue
+        if shape1[i] != shape2[i]:
+            return False  # Dimension mismatch
+
+    return True
