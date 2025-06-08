@@ -1,11 +1,52 @@
-def can_concat(shape1, shape2, axis):
-    if len(shape1) != len(shape2):
-        return False  # Rank mismatch
+import numpy as np
 
-    for i in range(len(shape1)):
-        if i == axis:
-            continue
-        if shape1[i] != shape2[i]:
-            return False  # Dimension mismatch
+def is_valid_scatter_for_slice_concat(indices, updates, data_shape):
+    """
+    Validates if a ScatterND operation with given indices and updates can be replaced
+    with a Slice + Concat pattern for a data tensor of shape (N, C, W).
+
+    Args:
+        indices: numpy array of shape (N, 1, 1, 3) or equivalent (flexible format)
+        updates: numpy array of shape (N, 1, W)
+        data_shape: tuple (N, C, W)
+
+    Returns:
+        True if valid for replacement, else False
+    """
+    if indices.ndim != 4 or indices.shape[-1] != 3:
+        return False
+
+    N, C, W = data_shape
+
+    # Batch size must match
+    if indices.shape[0] != updates.shape[0] or indices.shape[0] != N:
+        return False
+
+    # Ensure one index per batch
+    num_indices_per_batch = np.prod(indices.shape[1:-1])
+    if num_indices_per_batch != 1:
+        return False
+
+    # Ensure update shape is (N, 1, W)
+    if updates.shape != (N, 1, W):
+        return False
+
+    # Reshape for easy indexing
+    flat_indices = indices.reshape(N, 3)
+
+    # Get fixed channel and width position
+    expected_channel = flat_indices[0][1]
+    expected_width = flat_indices[0][2]
+
+    if not (0 <= expected_channel < C):
+        return False
+    if expected_width != 0:
+        return False
+
+    # Validate all indices follow pattern (i, expected_channel, 0)
+    for i in range(N):
+        b, c, w = flat_indices[i]
+        if b != i or c != expected_channel or w != expected_width:
+            return False
 
     return True
