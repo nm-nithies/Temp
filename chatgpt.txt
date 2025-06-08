@@ -1,6 +1,66 @@
-flat_indices = indices.reshape(N, 3)
+import numpy as np
+import os
 
-    fixed_channel = flat_indices[0][1]
+def parse_replace_input_args(args, typedict, G):
+    """
+    Parses the --replace_input_with_constant arguments and validates types and presence in the graph.
 
-    if not np.all(flat_indices[:, 1] == fixed_channel):
-        raise ValueError("Channel index is not consistent across batches")
+    Args:
+        args (list of str): Arguments like ['input1', '1', 'input2', 'input2.npy']
+        typedict (dict): Dictionary mapping input names to expected numpy dtypes
+        G (networkx.Graph): Graph where G.nodes contains all node names
+
+    Returns:
+        dict: A dictionary of input names to values (numbers or np.ndarray)
+
+    Raises:
+        ValueError, FileNotFoundError, TypeError if validation fails
+    """
+    if len(args) % 2 != 0:
+        raise ValueError("Arguments must be in pairs of (input_name, value_or_file)")
+
+    result = {}
+    i = 0
+    while i < len(args):
+        input_name = args[i]
+        val = args[i + 1]
+
+        # Check input is in the graph
+        if input_name not in G.nodes:
+            raise ValueError(f"Input name '{input_name}' not found in graph nodes")
+
+        # Check input is in typedict
+        if input_name not in typedict:
+            raise ValueError(f"Input name '{input_name}' not found in typedict")
+
+        expected_dtype = typedict[input_name]
+
+        # Parse value
+        if val.endswith('.npy'):
+            if not os.path.isfile(val):
+                raise FileNotFoundError(f"Numpy file '{val}' not found for input '{input_name}'")
+            try:
+                loaded_val = np.load(val)
+            except Exception as e:
+                raise ValueError(f"Failed to load numpy file '{val}' for '{input_name}': {e}")
+
+            if loaded_val.dtype != expected_dtype:
+                raise TypeError(
+                    f"Type mismatch for '{input_name}': expected {expected_dtype}, got {loaded_val.dtype}"
+                )
+
+        else:
+            try:
+                if np.issubdtype(expected_dtype, np.integer):
+                    loaded_val = expected_dtype.type(int(val))
+                elif np.issubdtype(expected_dtype, np.floating):
+                    loaded_val = expected_dtype.type(float(val))
+                else:
+                    raise TypeError(f"Unsupported dtype '{expected_dtype}' for input '{input_name}'")
+            except Exception as e:
+                raise ValueError(f"Invalid value '{val}' for input '{input_name}': {e}")
+
+        result[input_name] = loaded_val
+        i += 2
+
+    return result
