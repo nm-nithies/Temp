@@ -1,11 +1,19 @@
- parser.add_argument(
-    "--replace_input_with_constant",
-    type=str,
-    nargs="+",
-    action="append",
-    default=None,
-    help="Placeholder name followed by its shape (and dtype) or absolute path of saved input file. "
-            "If a npy or pkl file is provided, it is used as inference input, otherwise random data is used. "
-            "Usage example: -p input1 1 299 299 3 -p input2 1 2 or -p input 1 299 299 3 float32 or "
-            "-p input /abspath/to/input1.npy or -p input /abspath/to/input1.pkl",
+parser.add_argument(
+    '--replace_input_with_constant',
+    nargs='+',
+    help=(
+        "Replaces one or more input nodes in the model with constant values. "
+        "Each input should be followed by its replacement value: either a scalar (int or float) or "
+        "an absolute path to a .npy file containing the tensor data. "
+        "The provided values will be validated for type and shape consistency against the original model inputs. "
+        "Example usage:\n"
+        "  --replace_input_with_constant input1 1.0\n"
+        "  --replace_input_with_constant input2 input2.npy\n"
+        "  --replace_input_with_constant input1 1.0 input2 input2.npy\n"
+        "\n"
+        "Note:\n"
+        "- Scalars can be broadcasted to the expected shape if allowed.\n"
+        "- .npy files must contain data matching the input's expected dtype and shape.\n"
+        "- This is useful for freezing inputs or simplifying models for inference or deployment."
     )
+)
