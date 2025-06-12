@@ -1,1 +1,1 @@
-Returns the corresponding NumPy dtype for a given ONNX Runtime dtype, defaulting to float32 with a warning if unrecognized.
+The replace_input_with_constant pass updates the random input values with the provided constant values when running inference on the original ONNX model, and removes the corresponding input nodes from the graph when inferring the optimized ONNX model.
