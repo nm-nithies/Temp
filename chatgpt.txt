@@ -1,1 +1,14 @@
-The replace_input_with_constant pass updates the random input values with the provided constant values when running inference on the original ONNX model, and removes the corresponding input nodes from the graph when inferring the optimized ONNX model.
+  modified:   nnac/converter/onnx2mwnn/testsets.yaml
+        modified:   nnac/legalizer/custom_optimize_pass/replace_scatternd.py
+        modified:   nnac/legalizer/customized_pass_explain.md
+        modified:   nnac/legalizer/experiment/onnx_mlir_legalize_flow.py
+        deleted:    nnac/legalizer/experiment/test_onnx_mlir_legalize_flow.py
+        modified:   nnac/legalizer/regression_test.py
+        modified:   nnac/legalizer/testsets.yaml
+        modified:   nnac/mwnn_options.py
+        modified:   nnac/nnac_regression/nnac_functionality/testsets.yaml
+        modified:   nnac/onnx_compliance/custom_report.py
+        modified:   nnac/onnx_compliance/exclusion_list.py
+        modified:   nnac/onnx_compliance/extract_ops.py
+        modified:   nnac/onnx_compliance/nnac_backend.py
+        modified:   tests/integration/testsets.yaml
