@@ -1,9 +1,11 @@
-Hi chatgpt, I have a added a new placeholder which replaces input nodes with constants. 
-Eg:
---replace_input_with_constant input2 1 
---replace_input_with_constant input2 input2.npy
---replace_input_with_constant input1 1 input2 3
---replace_input_with_constant input1 input1.npy input2 input2.npy
---replace_input_with_constant input1 input1.npy input2 3
+In the constant parser, shape validation requires that the provided value exactly matches the expected shape in length. For example, if the expected shape is [250, 1, 12] and you provide a scalar like 0 for prev_bev, the validation will fail due to a shape mismatch.
 
-I need a function to check wtheher i got expected inputs and values. In need all kind of check conditions and need to return a dict which input with values whether it contains numpy files exrat it those values and the values in the dic
+However, in some components like usePrev_bev, a scalar input such as 1 is acceptable because the expected shape is just a single value.
+
+To improve usability, we can allow scalar values (like 0) to be automatically broadcasted to the required shape. This way, users can specify:
+
+bash
+Copy
+Edit
+--replace_input_with_constant usePrev_bev 1 prev_bev 0
+and the scalar 0 for prev_bev will be broadcasted to match the expected shape [250, 1, 12].
