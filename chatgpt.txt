@@ -1,1 +1,11 @@
-The ReplaceInputWithConstant pass is designed to replace specific input nodes in a computational graph with constant values. This can be useful for scenarios such as freezing parts of the model, simplifying inference, or preparing the graph for hardware deployment where certain inputs are fixed.
+ parser.add_argument(
+    "--replace_input_with_constant",
+    type=str,
+    nargs="+",
+    action="append",
+    default=None,
+    help="Placeholder name followed by its shape (and dtype) or absolute path of saved input file. "
+            "If a npy or pkl file is provided, it is used as inference input, otherwise random data is used. "
+            "Usage example: -p input1 1 299 299 3 -p input2 1 2 or -p input 1 299 299 3 float32 or "
+            "-p input /abspath/to/input1.npy or -p input /abspath/to/input1.pkl",
+    )
