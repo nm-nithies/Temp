@@ -1,14 +1,1 @@
-  modified:   nnac/converter/onnx2mwnn/testsets.yaml
-        modified:   nnac/legalizer/custom_optimize_pass/replace_scatternd.py
-        modified:   nnac/legalizer/customized_pass_explain.md
-        modified:   nnac/legalizer/experiment/onnx_mlir_legalize_flow.py
-        deleted:    nnac/legalizer/experiment/test_onnx_mlir_legalize_flow.py
-        modified:   nnac/legalizer/regression_test.py
-        modified:   nnac/legalizer/testsets.yaml
-        modified:   nnac/mwnn_options.py
-        modified:   nnac/nnac_regression/nnac_functionality/testsets.yaml
-        modified:   nnac/onnx_compliance/custom_report.py
-        modified:   nnac/onnx_compliance/exclusion_list.py
-        modified:   nnac/onnx_compliance/extract_ops.py
-        modified:   nnac/onnx_compliance/nnac_backend.py
-        modified:   tests/integration/testsets.yaml
+git add nnac/converter/onnx2mwnn/testsets.yaml nnac/legalizer/custom_optimize_pass/replace_scatternd.py nnac/legalizer/customized_pass_explain.md nnac/legalizer/experiment/onnx_mlir_legalize_flow.py nnac/legalizer/regression_test.py nnac/legalizer/testsets.yaml nnac/mwnn_options.py nnac/nnac_regression/nnac_functionality/testsets.yaml nnac/onnx_compliance/custom_report.py nnac/onnx_compliance/exclusion_list.py nnac/onnx_compliance/extract_ops.py nnac/onnx_compliance/nnac_backend.py tests/integration/testsets.yaml
