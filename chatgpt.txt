@@ -1,11 +1,1 @@
-In the constant parser, shape validation requires that the provided value exactly matches the expected shape in length. For example, if the expected shape is [250, 1, 12] and you provide a scalar like 0 for prev_bev, the validation will fail due to a shape mismatch.
-
-However, in some components like usePrev_bev, a scalar input such as 1 is acceptable because the expected shape is just a single value.
-
-To improve usability, we can allow scalar values (like 0) to be automatically broadcasted to the required shape. This way, users can specify:
-
-bash
-Copy
-Edit
---replace_input_with_constant usePrev_bev 1 prev_bev 0
-and the scalar 0 for prev_bev will be broadcasted to match the expected shape [250, 1, 12].
+The ReplaceInputWithConstant pass is designed to replace specific input nodes in a computational graph with constant values. This can be useful for scenarios such as freezing parts of the model, simplifying inference, or preparing the graph for hardware deployment where certain inputs are fixed.
