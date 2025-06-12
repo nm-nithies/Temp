@@ -1,17 +1,9 @@
-"""
-    Validates if a ScatterND operation with given indices and updates can be replaced
-    with a Slice + Concat pattern for a data tensor of shape (N, C, W).
+Hi chatgpt, I have a added a new placeholder which replaces input nodes with constants. 
+Eg:
+--replace_input_with_constant input2 1 
+--replace_input_with_constant input2 input2.npy
+--replace_input_with_constant input1 1 input2 3
+--replace_input_with_constant input1 input1.npy input2 input2.npy
+--replace_input_with_constant input1 input1.npy input2 3
 
-    This replacement is valid only when each update targets the same channel and 
-    starting width (usually zero), with exactly one update per batch, and the 
-    indices are aligned sequentially with batch indices 
-    (i.e., indices are of the form (i, fixed_channel, 0) for each batch i).
-
-    Args:
-        indices: numpy array of shape (N, 1, 1, 3) or equivalent (flexible format)
-        updates_shape: list(N, 1, W)
-        data_shape: list(N, C, W)
-
-    Returns:
-        True if valid for replacement, else False
-    """
+I need a function to check wtheher i got expected inputs and values. In need all kind of check conditions and need to return a dict which input with values whether it contains numpy files exrat it those values and the values in the dic
