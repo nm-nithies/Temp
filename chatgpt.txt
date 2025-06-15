@@ -1,1 +1,7 @@
-git add nnac/converter/onnx2mwnn/testsets.yaml nnac/legalizer/custom_optimize_pass/replace_scatternd.py nnac/legalizer/customized_pass_explain.md nnac/legalizer/experiment/onnx_mlir_legalize_flow.py nnac/legalizer/regression_test.py nnac/legalizer/testsets.yaml nnac/mwnn_options.py nnac/nnac_regression/nnac_functionality/testsets.yaml nnac/onnx_compliance/custom_report.py nnac/onnx_compliance/exclusion_list.py nnac/onnx_compliance/extract_ops.py nnac/onnx_compliance/nnac_backend.py tests/integration/testsets.yaml
+def get_dtype(dtype):
+    """Returns the corresponding NumPy dtype for a given ONNX Runtime dtype
+    """
+    if dtype in ORT_TYPE_TO_NP_TYPE:
+        numpy_dtype = ORT_TYPE_TO_NP_TYPE[dtype]
+    else:
+        logger.warning("[WARNING] Treat as float32 as a trial.")
