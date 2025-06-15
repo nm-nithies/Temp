@@ -1,7 +1,8 @@
 def get_dtype(dtype):
-    """Returns the corresponding NumPy dtype for a given ONNX Runtime dtype
-    """
+    """Returns the corresponding NumPy dtype for a given ONNX Runtime dtype."""
     if dtype in ORT_TYPE_TO_NP_TYPE:
         numpy_dtype = ORT_TYPE_TO_NP_TYPE[dtype]
     else:
-        logger.warning("[WARNING] Treat as float32 as a trial.")
+        logger.warning(f"[WARNING] Dtype '{dtype}' not recognized. Treating as float32 as a trial.")
+        numpy_dtype = np.float32
+    return numpy_dtype
