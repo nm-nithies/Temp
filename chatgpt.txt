@@ -1,1 +1,1 @@
-In warning info, better to point out this type {} is unsupported in numpy representation first, then followed by this "treat as ..."
+ logger.warning(f"[WARNING] The dtype '{dtype}' is unsupported in NumPy representation. Treating as float32 as a trial.")
