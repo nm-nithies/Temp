@@ -1,1 +1,40 @@
- logger.warning(f"[WARNING] The dtype '{dtype}' is unsupported in NumPy representation. Treating as float32 as a trial.")
+This QDQ optimization pass convert Conv bias from float32 to int32 by inserting a dequantize layer.
+
+
+                                  |
+                                  Q
+                   (weights)Q     |
+                            |     DQ
+                            DQ    |
+                            |____Conv(FP32 bias)
+                                  |
+                                  |
+
+
+to
+
+
+                                  |
+                                  Q
+                   (weights)Q     |
+                            |     DQ
+                            DQ    |     DQ(INT32 bias)
+                            |____Conv___|
+                                  |
+                                  |
+
+NOTE: This hack might degrade accuracy comparing with the original model,
+      since float32 values are converted to INT32 values now.
+
+
+            input_scale = get_input_scale(opt, pred_input)
+
+            if input_scale is None:
+                continue
+
+            weight_input = fp32_conv_bias_inputs[1]
+            weight_scale = tensorDict[G.nodes[weight_input]['input'][1]]
+            # scale values for Dequantize layer
+            bias_scale = input_scale * weight_scale
+            # quantized bias
+            add_int32 = (np.round(fp32_conv_bias/bias_scale)).astype(np.int32)
