@@ -1,1 +1,94 @@
- [ONNXRuntimeError] : 6 : RUNTIME_EXCEPTION : Non-zero status code returned while running DequantizeLinear node. Name:'/2_1/Conv_output_0/bias/duplicated' Status Message: /onnxruntime_src/onnxruntime/core/providers/cpu/quantization/quantize_linear.cc:112 void onnxruntime::PrepareForQDQ(const TensorShape&, const Tensor&, const Tensor*, int64_t, int64_t, int64_t&, int64_t&, int64_t&) zero_point_ptr == nullptr || (zero_point_ptr->Shape().NumDimensions() == 1 && zero_point_ptr->Shape()[0] == broadcast_dim) was false. For per axis quantization, x_zero_point must be null or 1D tensor with size 32
+def replace_input_with_constant(opt, legalize_replace_input_with_constant):
+    """
+    This method is designed to replace specific input nodes in a computational graph
+    with constant values.
+    """
+    G = opt.G
+    tensor_dict = opt.TensorDict
+    typeDict = opt.TypeDict
+    shapeDict = opt.ShapeDict
+
+    replace_input_node_dict = validate_and_extract_constants(G, typeDict, shapeDict, legalize_replace_input_with_constant[0])
+    for input_name in replace_input_node_dict.keys():
+        layer_succs = list(G.successors(input_name))
+        if len(layer_succs) > 0:
+            for layer_succ in layer_succs:
+                input_constant_name = input_name + "/constant_tensor"
+                tensor_dict[input_constant_name] = replace_input_node_dict[input_name]
+                for index in range(len(G.nodes[layer_succ]['input'])):
+                    if G.nodes[layer_succ]['input'][index] == input_name:
+                        G.nodes[layer_succ]['input'][index] = input_constant_name
+
+        G.remove_node(input_name)
+
+
+def validate_and_extract_constants(G, type_dict, shape_dict, args):
+    """
+      This method validates the inputs provided with the --legalize_replace_input_with_constant argument
+      and extracts the corresponding input node names along with their constant values.
+
+    Args:
+        args (list of str): e.g., ['input1', '1.0', 'input2', 'input2.npy']
+        typedict (dict): optimizer.TypeDict
+        shapedict (dict): optimizer.ShapeDict
+        G (dict): optimizer.G
+
+    Returns:
+        dict: input_name → constant value (np.ndarray)
+.
+    """
+    if len(args) % 2 != 0:
+        raise ValueError("Arguments must be in pairs: (input_name, value_or_file)")
+
+    replace_input_node_dict = {}
+    i = 0
+    while i < len(args):
+        input_name = args[i]
+        val = args[i + 1]
+
+        # Validate presence
+        if input_name not in G.nodes:
+            raise ValueError(f"Input name '{input_name}' not found in graph nodes")
+
+        expected_dtype = type_dict[input_name]
+        expected_shape = shape_dict[input_name]
+
+        # Load or parse value
+        if val.endswith('.npy'):
+            if not os.path.isfile(val):
+                raise FileNotFoundError(f"Numpy file '{val}' not found for input '{input_name}'")
+            try:
+                loaded_val = np.load(val)
+            except Exception as e:
+                raise ValueError(f"Failed to load .npy file '{val}' for '{input_name}': {e}")
+
+            if loaded_val.dtype != expected_dtype:
+                raise TypeError(f"'{input_name}' expected dtype {expected_dtype}, but got {loaded_val.dtype}")
+
+            if list(loaded_val.shape) != list(expected_shape):
+                raise ValueError(f"'{input_name}' expected shape {expected_shape}, but got {loaded_val.shape}")
+
+        else:
+            try:
+                if np.issubdtype(expected_dtype, np.integer):
+                    scalar_val = expected_dtype.type(int(val))
+                elif np.issubdtype(expected_dtype, np.floating):
+                    scalar_val = expected_dtype.type(float(val))
+                else:
+                    raise TypeError(f"Unsupported dtype '{expected_dtype}' for input '{input_name}'")
+
+                # Convert to numpy array for shape checking
+                loaded_val = np.array([scalar_val], dtype=expected_dtype)
+
+            except Exception as e:
+                raise ValueError(f"Invalid value '{val}' for input '{input_name}': {e}")
+
+            if list(loaded_val.shape) != list(expected_shape):
+                raise ValueError(
+                    f"'{input_name}' expected shape {expected_shape}, got scalar (use .npy file instead)"
+                )
+
+        replace_input_node_dict[input_name] = loaded_val
+        i += 2
+
+    return replace_input_node_dict
