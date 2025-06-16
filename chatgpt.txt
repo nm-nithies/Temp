@@ -1,40 +1,21 @@
-This QDQ optimization pass convert Conv bias from float32 to int32 by inserting a dequantize layer.
+🔢 How Bias Scale Is Calculated
+To convert the float32 bias to int32, the scale of the bias is derived from the input and weight scales as follows:
 
+ini
+Copy
+Edit
+bias_scale = input_scale * weight_scale
+Where:
 
-                                  |
-                                  Q
-                   (weights)Q     |
-                            |     DQ
-                            DQ    |
-                            |____Conv(FP32 bias)
-                                  |
-                                  |
+input_scale is the scale from the input Dequantize node.
 
+weight_scale is the scale from the weight Dequantize node.
 
-to
+The float32 bias is quantized using this bias_scale:
 
+ini
+Copy
+Edit
+int32_bias = np.round(fp32_conv_bias / bias_scale).astype(np.int32)
+This quantized int32_bias is then passed through a Dequantize node before reaching the Conv node, enabling compatibility with the QDQ flow.
 
-                                  |
-                                  Q
-                   (weights)Q     |
-                            |     DQ
-                            DQ    |     DQ(INT32 bias)
-                            |____Conv___|
-                                  |
-                                  |
-
-NOTE: This hack might degrade accuracy comparing with the original model,
-      since float32 values are converted to INT32 values now.
-
-
-            input_scale = get_input_scale(opt, pred_input)
-
-            if input_scale is None:
-                continue
-
-            weight_input = fp32_conv_bias_inputs[1]
-            weight_scale = tensorDict[G.nodes[weight_input]['input'][1]]
-            # scale values for Dequantize layer
-            bias_scale = input_scale * weight_scale
-            # quantized bias
-            add_int32 = (np.round(fp32_conv_bias/bias_scale)).astype(np.int32)
