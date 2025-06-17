@@ -1,9 +1,2 @@
-    """
-    This method is designed to replace specific input nodes in a computational graph
-    with constant values.
-
-    Args:
-        opt: The optimizer object containing graph (G), tensor dictionary, type and shape dicts.
-        legalize_replace_input_with_constant: Placeholder (may be deprecated if args is used instead).
-        args (list of str): Command-line style arguments like ['input1', '1.0', 'input2', 'input2.npy']
-    """
+legalize_replace_input_with_constant (list(list(str))): Replace specific input nodes in a computational graph
+                                                                    with constant values.
