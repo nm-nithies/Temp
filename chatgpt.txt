@@ -1,2 +1,1 @@
-legalize_replace_input_with_constant (list(list(str))):
-During legalization, this placeholder is used to replace specific input nodes in the computational graph with the provided constant values during parsing.
+Test cases in the sense to test the new parser support right?
