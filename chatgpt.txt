@@ -1,1 +1,1 @@
-f"[WARNING] The provided dtype '{dtype}' could not be mapped to a NumPy dtype. Using float32 as fallback."
+TypeError: legalize() got an unexpected keyword argument 'legalize_replace_input_with_constant'
