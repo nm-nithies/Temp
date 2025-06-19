@@ -1,13 +1,43 @@
-def legalize(
-    model: Union[str, onnx.ModelProto] = None,
-    input_placeholder: list = None,
-    input_data_format: str = "NCHW",
-    disable_pass: list = None,
-    enable_pass: list = None,
-    onnxruntime_validate: bool = True,
-    only_compare_output_nodes: bool = False,
-    error: float = 1.0e-3,
-    legalize_output_order_list: list = None,
-    legalize_replace_input_with_constant: list = None,
-    **kwargs
-) -> onnx.ModelProto:
+import onnx
+import onnx.mapping
+
+def get_input_shapes_and_types(model):
+    """
+    Extracts input node shapes and data types from an ONNX model.
+
+    Args:
+        model (onnx.ModelProto): Loaded ONNX model.
+
+    Returns:
+        input_shapes (dict): {input_name: shape list}
+        input_types (dict): {input_name: dtype string}
+    """
+    input_shapes = {}
+    input_types = {}
+
+    # Skip initializers (they are typically weights/constants)
+    initializer_names = {init.name for init in model.graph.initializer}
+
+    for input_tensor in model.graph.input:
+        name = input_tensor.name
+        if name in initializer_names:
+            continue
+
+        # Get shape
+        shape = []
+        for dim in input_tensor.type.tensor_type.shape.dim:
+            if dim.dim_value > 0:
+                shape.append(dim.dim_value)
+            elif dim.dim_param:
+                shape.append(dim.dim_param)  # symbolic/dynamic
+            else:
+                shape.append(None)  # unknown
+
+        # Get dtype
+        elem_type = input_tensor.type.tensor_type.elem_type
+        dtype = onnx.mapping.TENSOR_TYPE_TO_NP_TYPE.get(elem_type, "Unknown")
+
+        input_shapes[name] = shape
+        input_types[name] = str(dtype)
+
+    return input_shapes, input_types
