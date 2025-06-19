@@ -1,8 +1,11 @@
-import numpy as np
+# Standard library imports
 import os
-import onnx
+
+# Third-party imports
 import numpy as np
-from onnx import helper, numpy_helper
 import onnx
+from onnx import helper, numpy_helper
 import onnx.mapping
+
+# Local application/library-specific imports
 from nnac.core.utils import full_shape_infer
