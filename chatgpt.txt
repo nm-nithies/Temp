@@ -1,43 +1,39 @@
 import onnx
-import onnx.mapping
+import numpy as np
+from onnx import helper, numpy_helper, ModelProto
 
-def get_input_shapes_and_types(model):
+def replace_inputs_with_constants(model: onnx.ModelProto, input_tensor_dict: dict) -> onnx.ModelProto:
     """
-    Extracts input node shapes and data types from an ONNX model.
-
+    Replace specific inputs in the ONNX model with constant tensors.
+    
     Args:
-        model (onnx.ModelProto): Loaded ONNX model.
+        model (onnx.ModelProto): The input ONNX model.
+        input_tensor_dict (dict): Dictionary of {input_name: numpy_array}.
 
     Returns:
-        input_shapes (dict): {input_name: shape list}
-        input_types (dict): {input_name: dtype string}
+        onnx.ModelProto: The updated ONNX model with inputs replaced.
     """
-    input_shapes = {}
-    input_types = {}
+    # Clone the model to avoid modifying in-place
+    model = onnx.ModelProto()
+    model.CopyFrom(model)
 
-    # Skip initializers (they are typically weights/constants)
-    initializer_names = {init.name for init in model.graph.initializer}
+    graph = model.graph
+    input_names_to_replace = set(input_tensor_dict.keys())
 
-    for input_tensor in model.graph.input:
-        name = input_tensor.name
-        if name in initializer_names:
-            continue
+    # Remove specified inputs from graph.input
+    graph.input[:] = [inp for inp in graph.input if inp.name not in input_names_to_replace]
 
-        # Get shape
-        shape = []
-        for dim in input_tensor.type.tensor_type.shape.dim:
-            if dim.dim_value > 0:
-                shape.append(dim.dim_value)
-            elif dim.dim_param:
-                shape.append(dim.dim_param)  # symbolic/dynamic
-            else:
-                shape.append(None)  # unknown
+    for name, np_array in input_tensor_dict.items():
+        # 1. Add as initializer
+        init_tensor = numpy_helper.from_array(np_array, name=name)
+        graph.initializer.append(init_tensor)
 
-        # Get dtype
-        elem_type = input_tensor.type.tensor_type.elem_type
-        dtype = onnx.mapping.TENSOR_TYPE_TO_NP_TYPE.get(elem_type, "Unknown")
+        # 2. Optionally, add value_info (helps ONNX tooling)
+        value_info = helper.make_tensor_value_info(
+            name=name,
+            elem_type=init_tensor.data_type,
+            shape=np_array.shape
+        )
+        graph.value_info.append(value_info)
 
-        input_shapes[name] = shape
-        input_types[name] = str(dtype)
-
-    return input_shapes, input_types
+    return model
