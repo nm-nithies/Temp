@@ -1,1 +1,13 @@
-TypeError: legalize() got an unexpected keyword argument 'legalize_replace_input_with_constant'
+def legalize(
+    model: Union[str, onnx.ModelProto] = None,
+    input_placeholder: list = None,
+    input_data_format: str = "NCHW",
+    disable_pass: list = None,
+    enable_pass: list = None,
+    onnxruntime_validate: bool = True,
+    only_compare_output_nodes: bool = False,
+    error: float = 1.0e-3,
+    legalize_output_order_list: list = None,
+    legalize_replace_input_with_constant: list = None,
+    **kwargs
+) -> onnx.ModelProto:
