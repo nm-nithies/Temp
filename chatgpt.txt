@@ -1,39 +1,4 @@
-import onnx
-import numpy as np
-from onnx import helper, numpy_helper, ModelProto
-
-def replace_inputs_with_constants(model: onnx.ModelProto, input_tensor_dict: dict) -> onnx.ModelProto:
-    """
-    Replace specific inputs in the ONNX model with constant tensors.
-    
-    Args:
-        model (onnx.ModelProto): The input ONNX model.
-        input_tensor_dict (dict): Dictionary of {input_name: numpy_array}.
-
-    Returns:
-        onnx.ModelProto: The updated ONNX model with inputs replaced.
-    """
-    # Clone the model to avoid modifying in-place
-    model = onnx.ModelProto()
-    model.CopyFrom(model)
-
-    graph = model.graph
-    input_names_to_replace = set(input_tensor_dict.keys())
-
-    # Remove specified inputs from graph.input
-    graph.input[:] = [inp for inp in graph.input if inp.name not in input_names_to_replace]
-
-    for name, np_array in input_tensor_dict.items():
-        # 1. Add as initializer
-        init_tensor = numpy_helper.from_array(np_array, name=name)
-        graph.initializer.append(init_tensor)
-
-        # 2. Optionally, add value_info (helps ONNX tooling)
-        value_info = helper.make_tensor_value_info(
-            name=name,
-            elem_type=init_tensor.data_type,
-            shape=np_array.shape
-        )
-        graph.value_info.append(value_info)
-
-    return model
+# This works without TypeError
+new_inputs = [inp for inp in graph.input if inp.name not in input_names_to_remove]
+del graph.input[:]
+graph.input.extend(new_inputs)
