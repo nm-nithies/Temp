@@ -1,4 +1,8 @@
-# This works without TypeError
-new_inputs = [inp for inp in graph.input if inp.name not in input_names_to_remove]
-del graph.input[:]
-graph.input.extend(new_inputs)
+import numpy as np
+import os
+import onnx
+import numpy as np
+from onnx import helper, numpy_helper
+import onnx
+import onnx.mapping
+from nnac.core.utils import full_shape_infer
