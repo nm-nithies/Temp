@@ -1,11 +1,1 @@
-# Standard library imports
-import os
-
-# Third-party imports
-import numpy as np
-import onnx
-from onnx import helper, numpy_helper
-import onnx.mapping
-
-# Local application/library-specific imports
-from nnac.core.utils import full_shape_infer
+2025-06-19 21:59:03.389184743 [E:onnxruntime:, sequential_executor.cc:572 ExecuteKernel] Non-zero status code returned while running Conv node. Name:'model/tf_op_layer_Relu_48/Relu_48/Conv' Status Message: kernel_shape is not compatible with W shape. kernel_shape: {1,1} W: {1280,320,1,1280} channels_last: 0
