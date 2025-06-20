@@ -1,1 +1,42 @@
-2025-06-19 21:59:03.389184743 [E:onnxruntime:, sequential_executor.cc:572 ExecuteKernel] Non-zero status code returned while running Conv node. Name:'model/tf_op_layer_Relu_48/Relu_48/Conv' Status Message: kernel_shape is not compatible with W shape. kernel_shape: {1,1} W: {1280,320,1,1280} channels_last: 0
+from typing import Sequence, Tuple, Optional
+
+def broadcast_shape_like(reference: Sequence[int], target: Sequence[int]) -> Optional[Tuple[int]]:
+    """
+    Broadcast `target` shape to align with `reference` shape.
+    Supports input as list or tuple.
+
+    Parameters:
+    - reference: list or tuple of ints
+    - target: list or tuple of ints
+
+    Returns:
+    - Tuple[int]: target shape broadcasted to match reference rank
+    - None: if broadcasting is invalid
+    """
+    # Convert both to tuples for consistent handling
+    reference = tuple(reference)
+    target = tuple(target)
+
+    ref_len = len(reference)
+    tgt_len = len(target)
+
+    # Step 1: Align ranks by padding target with 1s (if needed)
+    if tgt_len < ref_len:
+        # Pad with leading 1s to match reference length
+        num_padding = ref_len - tgt_len
+        padded_target = (1,) * num_padding + target
+    else:
+        # Trim target to last `ref_len` dims to align with reference
+        padded_target = target[-ref_len:]
+
+    # Step 2: Compare dimensions for broadcasting compatibility
+    result = []
+    for r_dim, t_dim in zip(reference, padded_target):
+        if r_dim == t_dim or t_dim == 1:
+            result.append(t_dim)
+        elif r_dim == 1:
+            result.append(t_dim)
+        else:
+            return None  # Broadcasting is not possible
+
+    return tuple(result)
