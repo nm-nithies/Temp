@@ -1,1 +1,3 @@
-Reordered optimization passes to apply MoveTransposeToEnd before RemoveTransposeBeforeSoftmax to preserve correct input shape for Softmax and avoid shape mismatch issues
+Fixed the legalization issue in FuseMulIntoConv pass, As it required broadcasting the Mul constants to fuse into conv weights. 
+
+Even the Mul has negative values it cannot ne fused into Conv . It skipped 
