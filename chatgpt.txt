@@ -1,3 +1,1 @@
-Fixed the legalization issue in FuseMulIntoConv pass, As it required broadcasting the Mul constants to fuse into conv weights. 
-
-Even the Mul has negative values it cannot ne fused into Conv . It skipped 
+ixed the legalization issue in the FuseMulIntoConv pass by broadcasting Mul constants to match Conv weights for proper fusion. Also added a check to skip fusion when the Mul constants contain negative values, as they cannot be legally fused into Conv.
