@@ -1,12 +1,6 @@
-def get_broadcast_shape(shape1, shape2):
-    shape1 = list(shape1)
-    shape2 = list(shape2)
+ Returns the shape that the target tensor should have to broadcast correctly with the reference shape.
+    It pads the target shape with 1s (at the beginning) so the two shapes are compatible for element-wise operations.
 
-    result_shape = []
-    for dim in shape1:
-        if dim in shape2:
-            result_shape.append(dim)
-        else:
-            result_shape.append(1)
-
-    return tuple(result_shape)
+    Example:
+        broadcast_shape_like((1280, 320, 20, 20), (1280,))
+        → [1280, 1, 1, 1]
