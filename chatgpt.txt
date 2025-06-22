@@ -1,26 +1,21 @@
-def broadcast_shape_like(reference_shape, target_shape):
-    """
-    Computes the broadcast-compatible shape of `target_shape` to match `reference_shape`.
-
-    Args:
-        reference_shape (tuple or list of int): The reference shape.
-        target_shape (tuple or list of int): The shape to be broadcasted.
-
-    Returns:
-        list of int: The broadcasted shape of target_shape matching reference_shape.
-    """
-    ref_len = len(reference_shape)
-    tgt_len = len(target_shape)
-
-    if tgt_len > ref_len:
-        raise ValueError("Target shape has more dimensions than reference shape.")
-
-    # Pad target shape with 1s on the left
-    padded_target = [1] * (ref_len - tgt_len) + list(target_shape)
-
-    # Validate broadcastability
-    for r, t in zip(reference_shape, padded_target):
-        if t != 1 and t != r:
-            raise ValueError(f"Shapes {reference_shape} and {target_shape} are not broadcast compatible.")
-
-    return padded_target
+def broadcast_shapes(shape1, shape2):
+    # Convert to lists for easier manipulation
+    shape1 = list(shape1)
+    shape2 = list(shape2)
+    
+    # Pad the shorter shape with 1's at the beginning
+    max_len = max(len(shape1), len(shape2))
+    shape1 = [1] * (max_len - len(shape1)) + shape1
+    shape2 = [1] * (max_len - len(shape2)) + shape2
+    
+    # Check compatibility and compute broadcasted shape
+    result = []
+    for dim1, dim2 in zip(shape1, shape2):
+        if dim1 == 1:
+            result.append(dim2)
+        elif dim2 == 1:
+            result.append(dim1)
+        elif dim1 == dim2:
+            result.append(dim1)
+        else:
+            raise ValueError(f"Shapes {tuple(shape1)} and {tuple(shape2)} are not broadcastable")
