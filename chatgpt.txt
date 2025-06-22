@@ -1,37 +1,39 @@
-def broadcast_shapes(shape1, shape2):
-    shape1 = list(shape1)
-    shape2 = list(shape2)
-    
-    # Reverse shapes to align from right to left
-    rev_shape1 = shape1[::-1]
-    rev_shape2 = shape2[::-1]
-    
-    result_rev = []
-    for dim1, dim2 in zip(rev_shape1, rev_shape2):
-        if dim1 == 1:
-            result_rev.append(dim2)
-        elif dim2 == 1:
-            result_rev.append(dim1)
-        elif dim1 == dim2:
-            result_rev.append(dim1)
-        else:
-            raise ValueError(f"Shapes {tuple(shape1)} and {tuple(shape2)} are not broadcastable")
-    
-    # Pad remaining dimensions with the longer shape's values
-    max_len = max(len(rev_shape1), len(rev_shape2))
-    if len(rev_shape1) > len(rev_shape2):
-        result_rev.extend(rev_shape1[len(rev_shape2):])
-    else:
-        result_rev.extend(rev_shape2[len(rev_shape1):])
-    
-    # Reverse back to original order
-    return tuple(result_rev[::-1])
+import torch
+import torch.nn as nn
 
-# Test cases
-print(broadcast_shapes((1280, 320, 20, 20), (1280,)))               # (1280, 1, 1, 1)
-print(broadcast_shapes((120, 320, 20, 20), (320,)))                 # (1, 320, 1, 1)
-print(broadcast_shapes((12, 32, 1, 1), (12, 32)))                   # (12, 32, 1, 1)
-print(broadcast_shapes((1, 3, 20, 20), (20, 20)))                   # (1, 3, 20, 20)
-print(broadcast_shapes((5, 4), (1,)))                               # (5, 4)
-print(broadcast_shapes((15, 3, 5), (15, 1, 5)))                     # (15, 3, 5)
-print(broadcast_shapes((8, 1, 6, 1), (7, 1, 5)))                    # Raises ValueError
+class ConvReLUScale(nn.Module):
+    def __init__(self):
+        super(ConvReLUScale, self).__init__()
+        # Conv layer: 320 input channels, 1280 output channels, 1x1 kernel
+        self.conv = nn.Conv2d(320, 1280, kernel_size=1, stride=1, bias=True)
+        
+        # Positive scaling factors (1x1280x1x1)
+        self.scale = nn.Parameter(torch.rand(1, 1280, 1, 1).abs()  # Ensure positive values
+
+    def forward(self, x):
+        x = self.conv(x)  # Shape: [1, 1280, 22, 40]
+        x = torch.relu(x)  # ReLU activation
+        x = x * self.scale  # Per-channel scaling
+        return x
+
+# Create model
+model = ConvReLUScale()
+
+# Dummy input matching the specified shape [1, 320, 22, 40]
+dummy_input = torch.randn(1, 320, 22, 40)
+
+# Export to ONNX
+torch.onnx.export(
+    model,
+    dummy_input,
+    "conv_relu_scale.onnx",
+    input_names=["input"],
+    output_names=["output"],
+    dynamic_axes={
+        "input": {0: "batch_size"},  # Support dynamic batch size
+        "output": {0: "batch_size"}
+    },
+    opset_version=13  # Using ONNX opset 13
+)
+
+print("Model exported to conv_relu_scale.onnx")
