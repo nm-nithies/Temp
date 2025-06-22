@@ -1,39 +1,12 @@
-import torch
-import torch.nn as nn
+def get_broadcast_shape(shape1, shape2):
+    shape1 = list(shape1)
+    shape2 = list(shape2)
 
-class ConvReLUScale(nn.Module):
-    def __init__(self):
-        super(ConvReLUScale, self).__init__()
-        # Conv layer: 320 input channels, 1280 output channels, 1x1 kernel
-        self.conv = nn.Conv2d(320, 1280, kernel_size=1, stride=1, bias=True)
-        
-        # Positive scaling factors (1x1280x1x1)
-        self.scale = nn.Parameter(torch.rand(1, 1280, 1, 1).abs()  # Ensure positive values
+    result_shape = []
+    for dim in shape1:
+        if dim in shape2:
+            result_shape.append(dim)
+        else:
+            result_shape.append(1)
 
-    def forward(self, x):
-        x = self.conv(x)  # Shape: [1, 1280, 22, 40]
-        x = torch.relu(x)  # ReLU activation
-        x = x * self.scale  # Per-channel scaling
-        return x
-
-# Create model
-model = ConvReLUScale()
-
-# Dummy input matching the specified shape [1, 320, 22, 40]
-dummy_input = torch.randn(1, 320, 22, 40)
-
-# Export to ONNX
-torch.onnx.export(
-    model,
-    dummy_input,
-    "conv_relu_scale.onnx",
-    input_names=["input"],
-    output_names=["output"],
-    dynamic_axes={
-        "input": {0: "batch_size"},  # Support dynamic batch size
-        "output": {0: "batch_size"}
-    },
-    opset_version=13  # Using ONNX opset 13
-)
-
-print("Model exported to conv_relu_scale.onnx")
+    return tuple(result_shape)
