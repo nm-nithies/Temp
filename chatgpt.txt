@@ -1,5 +1,2 @@
-Fuse Mul initializer into previous Conv.
-    The fusion could also go across an intermediate Relu layer, e.g.
-    Conv (+ Relu) + Mul
-    ->
-    Conv (+ Relu)
+Fusion of Mul into Conv is allowed only when the Mul constant is positive, especially if followed by a Relu.
+Negative constants can be fused only if there's no Relu, or if the output behavior is provably preserved.
