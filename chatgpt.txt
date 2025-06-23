@@ -39,3 +39,9 @@ cleaned and pushed the codes.
 Replace_input_with_constant:
 Removed the optimized class in the code base. Cleaned and pushed the code
 MR - https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/1066
+
+
+
+Legalization of PointPillars fails
+Legalization refinement for efficientnetb0 graph
+Legalize: Fuse GroupNormalization
