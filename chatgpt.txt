@@ -1,1 +1,5 @@
-NumPy’s broadcasting rules work from the trailing dimensions backward
+Fuse Mul initializer into previous Conv.
+    The fusion could also go across an intermediate Relu layer, e.g.
+    Conv (+ Relu) + Mul
+    ->
+    Conv (+ Relu)
