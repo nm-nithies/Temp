@@ -1,36 +1,6 @@
-def get_broadcast_shape(conv_weight_shape, mul_const_shape):
-    """
-    Returns the shape that the Mul_const tensor should have to broadcast correctly with the conv_weights shape.
+ # Standard right-to-left broadcasting
+ # FIXME: This assumes left-to-right matching for single-dim Mul constants,
+        # which can be ambiguous when multiple dimensions have the same value (e.g., 64).
+        # Needs a more reliable way to determine which dimension the Mul constant targets
 
-    Example:
-        broadcast_shape_like((1280, 320, 20, 20), (1280,))
-        → [1280, 1, 1, 1]
-    """
-
-    shape1 = list(conv_weight_shape)
-    shape2 = list(mul_const_shape)
-
-    result_shape = []
-    length = 0
-
-    if len(shape2) == 1:
-        found = False
-        for dim in shape1:
-            if dim == shape2[0] and not found:
-                result_shape.append(dim)
-                found = True
-            else:
-                result_shape.append(1)
-
-    else:
-        shape1 = conv_weight_shape[::-1]
-        shape2 = mul_const_shape[::-1]
-
-        for dim in shape1:
-            if length < len(shape2) and dim == shape2[length]:
-                result_shape.insert(0, dim)
-                length = length + 1
-            else:
-                result_shape.insert(0, 1)
-
-    return tuple(result_shape)
+  # For example, if Conv shape is (64, 64, 3, 3) and Mul shape is (64,),
