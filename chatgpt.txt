@@ -12,12 +12,22 @@ def get_broadcast_shape(conv_weight_shape, mul_const_shape):
     shape2 = list(mul_const_shape)
 
     result_shape = []
-    for dim in shape1:
-        if dim in shape2:
-            result_shape.append(dim)
-        else:
-            result_shape.append(1)
+    if len(mul_const_shape) == 1:
+        found = False
+        for dim in reversed(shape1):
+            if dim in shape2 and not found:
+                result_shape.insert(0, dim)
+                found = True
+            else:
+                result_shape.insert(0, dim)
+
+
+    else:
+        length = len(result_shape) - 1
+        for dim in reversed(shape1):
+            if length >= 0 and dim == shape2[length]:
+                result_shape.append(dim)
+            else:
+                result_shape.append(1)
 
     return tuple(result_shape)
-
-Maybe also need to check the length and index mapping location?
