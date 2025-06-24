@@ -1,23 +1,10 @@
-def get_broadcast_shape(conv_weight_shape, mul_const_shape):
-    """
-    Returns the shape that the Mul_const tensor should have to broadcast correctly with the conv_weights shape.
-    It pads the  Mul_const shape with 1s so the two shapes are compatible for element-wise operations.
-
-    Example:
-        broadcast_shape_like((1280, 320, 20, 20), (1280,))
-        → [1280, 1, 1, 1]
-    """
-
-    shape1 = list(reversed(list(conv_weight_shape)))
-    shape2 = list(reversed(list(mul_const_shape)))
+shape1 = conv_weight_shape[::-1]
+    shape2 = mul_const_shape[::-1]
 
     result_shape = []
-    length = 0
-
-    for dim in shape1:
-        if length < len(shape2) and dim == shape2[length]:
+    for i, dim in enumerate(shape1):
+        if i < len(shape2) and dim == shape2[i]:
             result_shape.insert(0, dim)
-            length = length + 1
         else:
             result_shape.insert(0, 1)
 
