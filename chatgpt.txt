@@ -1,11 +1,3 @@
-shape1 = conv_weight_shape[::-1]
-    shape2 = mul_const_shape[::-1]
-
-    result_shape = []
-    for i, dim in enumerate(shape1):
-        if i < len(shape2) and dim == shape2[i]:
-            result_shape.insert(0, dim)
-        else:
-            result_shape.insert(0, 1)
-
-    return tuple(result_shape)
+* FuseMulIntoConv
+    * Fuse Mul initializer into previous Conv (and optionally with Relu) layer.
+    * Fusion of Mul into Conv is allowed only when the Mul constant is positive, especially if followed by a Relu
