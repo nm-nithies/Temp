@@ -1,6 +1,1 @@
-if np.array(mul_init).size > 1:
-            mul_init_squeeze = np.array(mul_init).squeeze()
-            if not (np.array(mul_init_squeeze) == mul_init_squeeze[0]).all():
-                mul_init = mul_init_squeeze
-            else:
-                mul_init = mul_init_squeeze[0]
+Ensures mul_init is simplified to a scalar if all values are equal; otherwise, removes unnecessary dimensions.
