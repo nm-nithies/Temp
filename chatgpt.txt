@@ -1,3 +1,19 @@
-* FuseMulIntoConv
-    * Fuse Mul initializer into previous Conv layer.
-    * Fuse Mul initializer into previous Conv layer only when the Mul constant is positive, especially if followed by a Relu
+Fuses a Mul initializer into the preceding Conv layer to simplify the computation.
+If a Relu follows the Conv layer, fusion is allowed only when the Mul constant is positive.
+
+Input:
+Conv
+   |
+ Mul
+
+output:
+Conv
+   
+pattern 2:
+
+input:
+conv
+  |
+relu
+  |
+Mul
