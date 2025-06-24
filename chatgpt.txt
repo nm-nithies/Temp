@@ -1,3 +1,3 @@
-One of the moodel gets failed during regression. Currently figuring out a solution to solve it. 
+One of the models is failing during regression, and I'm currently investigating the issue.
 
-Whether is this urgent to be merged my today?
+Is it urgent to have this merged today?
