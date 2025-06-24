@@ -8,26 +8,17 @@ def get_broadcast_shape(conv_weight_shape, mul_const_shape):
         → [1280, 1, 1, 1]
     """
 
-    shape1 = list(conv_weight_shape)
-    shape2 = list(mul_const_shape)
+    shape1 = list(reversed(list(conv_weight_shape)))
+    shape2 = list(reversed(list(mul_const_shape)))
 
     result_shape = []
-    if len(mul_const_shape) == 1:
-        found = False
-        for dim in reversed(shape1):
-            if dim in shape2 and not found:
-                result_shape.insert(0, dim)
-                found = True
-            else:
-                result_shape.insert(0, dim)
+    length = 0
 
-
-    else:
-        length = len(result_shape) - 1
-        for dim in reversed(shape1):
-            if length >= 0 and dim == shape2[length]:
-                result_shape.append(dim)
-            else:
-                result_shape.append(1)
+    for dim in shape1:
+        if length < len(shape2) and dim == shape2[length]:
+            result_shape.insert(0, dim)
+            length = length + 1
+        else:
+            result_shape.insert(0, 1)
 
     return tuple(result_shape)
