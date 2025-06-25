@@ -1,12 +1,6 @@
-RetinaNet
- DETR_mmlab|
-YoloV5m
-YoloV5s
-EfficientNet_Lite4
-YOLOX_x_mmlab
-RegNet_400mf_mmlab
-  EfficientNet_B4_mmlab
-MobileNetV2_CIFAR_QAT
- MobileNetV2_CIFAR_QAT_PyTorch
-HRNet_W48_mmlab
- InceptionV3_mmlab
+DeeplabV3_plus_ResNet50_voc_mmlab
+DeeplabV3_plus_ResNet101_mmlab
+ FCN_HRNet_voc_mmlab
+FCN_ResNet50_mmlab
+ FCN_ResNet101_mmlab
+EfficientDet_D0
