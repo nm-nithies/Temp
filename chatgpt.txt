@@ -8,3 +8,5 @@ RegNet_400mf_mmlab
   EfficientNet_B4_mmlab
 MobileNetV2_CIFAR_QAT
  MobileNetV2_CIFAR_QAT_PyTorch
+HRNet_W48_mmlab
+ InceptionV3_mmlab
