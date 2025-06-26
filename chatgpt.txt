@@ -27,30 +27,36 @@ def check_scatternd_pattern(data_shape, indices):
 
     return dim_with_3, all_same
 
-
-def check_scatternd_pattern(data_shape, indices):
+def is_valid_scatter_for_slice_concat(indices, updates_shape, data_shape):
     """
-    Checks whether the last dimension of `indices` maps consistently to the dimension with size 3 in `data_shape`.
+    This method validates if a ScatterND operation with given indices and updates can be
+    replaced with a Slice + Concat pattern for a data tensor of shape (N, C, W).
+
+    This replacement is valid only when each update targets the same channel and
+    starting width (usually zero), with exactly one update per batch, and the
+    indices are aligned sequentially with batch indices
+    (i.e., indices are of the form (i, fixed_channel, 0) for each batch i).
+
+    Args:
+        indices: numpy array of shape (N, 1, 1, 3) or equivalent (flexible format)
+        updates_shape: list(N, 1, W)
+        data_shape: list(N, C, W)
+
+    Returns:
+        True if valid for replacement, else False
     """
-    data_shape = tuple(data_shape)
-    indices = np.array(indices)
 
-    # Step 1: Find which dimension in data.shape has size 3
-    try:
-        dim_with_3 = data_shape.index(3)
-    except ValueError:
-        raise ValueError("No dimension with size 3 found in data_shape.")
+    if indices.ndim != 4 or indices.shape[-1] != 3:
+        return False
 
-    # Step 2: indices should have shape (..., 3)
-    if indices.shape[-1] != 3:
-        raise ValueError("The last dimension of indices must be 3.")
+    N, C, W = data_shape
 
-    # Step 3: Check if all indices[..., dim_with_3] are the same
-    dim_indices = indices[..., dim_with_3]
-    first_value = dim_indices.flat[0]
-    all_same = np.all(dim_indices == first_value)
+    # Batch size must match
+    if indices.shape[0] != updates_shape[0] or indices.shape[0] != N:
+        return False
 
-    print(f"Dimension with size 3 in data_shape: {dim_with_3}")
-    print(f"All indices along that dim are {'same' if all_same else 'not the same'}, value: {first_value if all_same else 'varies'}")
+    # Ensure update shape is (N, C, 1)
+    if len(updates_shape) != len(data_shape) or updates_shape != [N, C, 1]:
+        return False
 
-    return dim_with_3, all_same
+    return True
