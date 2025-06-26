@@ -1,1 +1,4 @@
-RuntimeError: Only tuples, lists and Variables are supported as JIT inputs/outputs. Dictionaries and strings are also accepted, but their usage is not recommended. Here, received an input of unsupported type: LiDARInstance3DBoxes
+Hi Yvonne,
+Some library files return a LiDARInstance3DBoxes object to JIT functions, which causes issues. We need to update the return type by changing the variable to variable.tensor or variable.data before passing it to JIT.
+
+He doesn’t remember the exact file name where this occurs. Could you please share the full error log? That would help us identify the source
