@@ -1,19 +1,29 @@
 def get_removed_input_node_names(legalize_replace_input_with_constant, input_data_types):
-    """This method extracts the corresponding input node names along with their constant values
-       from inputs provided with the --legalize_replace_input_with_constant argument.
+    """
+    Extracts input node names and constant values from the given input pairs.
+    
+    Args:
+        legalize_replace_input_with_constant (list of [str, str]): e.g., [['input1', '1.0'], ['input2', 'input2.npy']]
+        input_data_types (dict): Mapping of input names to expected data types
+
+    Returns:
+        dict: Mapping of input_name -> constant value (np.ndarray)
     """
     result = {}
-    i = 0
-    while i < len(legalize_replace_input_with_constant):
-        input_name = legalize_replace_input_with_constant[i]
-        val = legalize_replace_input_with_constant[i + 1]
+
+    for pair in legalize_replace_input_with_constant:
+        if len(pair) != 2:
+            raise ValueError(f"Each item must be a pair of (input_name, value_or_file), got: {pair}")
+
+        input_name, val = pair
+
         if val.endswith('.npy'):
             loaded_val = np.load(val)
         else:
-            val = int(val)
-            loaded_val = np.array([val], dtype=get_dtype(input_data_types[input_name]))
+            val = int(val)  # Optional: enhance this if float values are possible
+            dtype = get_dtype(input_data_types[input_name])
+            loaded_val = np.array([val], dtype=dtype)
 
         result[input_name] = loaded_val
-        i += 2
 
     return result
