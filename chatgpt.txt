@@ -1,36 +1,11 @@
-
-def is_valid_scatter_for_slice_concat(indices, updates_shape, data_shape):
-    """
-    Checks if a ScatterND op can be replaced with Slice + Concat.
-
     Conditions:
-      data_shape has a dimension of size 3.
-      indices shape is (..., 3), e.g., [N, 1, 1, 3].
-      updates_shape is [N, 1, 1] and batch size N matches.
-      InAll index values along the '3-sized' dimension are the same.
+      - data_shape must have a dimension of size equal to its rank (i.e., len(data_shape)),
+        which is used as the fixed update dimension.
+      - indices must be a 4D tensor with the last dimension equal to len(data_shape).
+      - updates_shape must match data_shape, except dimensions where updates has size 1.
+      - Batch size (first dimension) must match across indices, updates, and data.
+      - All index values along the fixed dimension in indices must be the same.
 
     Returns:
         True if valid for replacement, else False.
     """
-    if indices.ndim != 4 or indices.shape[-1] != 3:
-        return False
-
-    if indices.shape[0] != updates_shape[0] or indices.shape[0] != data_shape[0] or len(updates_shape) != len(data_shape):
-        return False
-    
-    for dim in range(len(updates_shape)):
-        if updates_shape[dim] != data_shape[dim] and updates_shape[dim] != 1:
-            return False
-
-    fixed_channel_index = data_shape.index(len(data_shape))
-    if indices.shape[-1] != len(data_shape):
-        return False
-    
-    dim_indices = indices[..., fixed_channel_index]
-    first_value = dim_indices.flat[0]
-    all_same = np.all(dim_indices == first_value)
-    
-    if not all_same:
-        return False
-
-    return True
