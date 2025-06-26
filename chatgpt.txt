@@ -1,59 +1,19 @@
-def validate_and_extract_constants(optimized_model, legalize_replace_input_with_constant):
+def get_removed_input_node_names(legalize_replace_input_with_constant, input_data_types):
+    """This method extracts the corresponding input node names along with their constant values
+       from inputs provided with the --legalize_replace_input_with_constant argument.
     """
-    Validates input pairs and extracts constants for input replacement.
-    
-    Args:
-        optimized_model (onnx.ModelProto): ONNX model
-        legalize_replace_input_with_constant (list of [str, str]): e.g., [['input1', '1.0'], ['input2', 'input2.npy']]
-    
-    Returns:
-        dict: Mapping of input_name -> np.ndarray constant value
-    """
-    input_node_shapes, input_node_types = get_input_shapes_and_types(optimized_model)
-
-    replace_input_node_dict = {}
-    for pair in legalize_replace_input_with_constant:
-        if len(pair) != 2:
-            raise ValueError(f"Each item must be a pair of (input_name, value_or_file), got: {pair}")
-        
-        input_name, val = pair
-        if input_name not in input_node_shapes:
-            raise ValueError(f"Input name '{input_name}' not found in graph nodes")
-
-        expected_dtype = input_node_types[input_name]
-        expected_shape = input_node_shapes[input_name]
-
+    result = {}
+    i = 0
+    while i < len(legalize_replace_input_with_constant):
+        input_name = legalize_replace_input_with_constant[i]
+        val = legalize_replace_input_with_constant[i + 1]
         if val.endswith('.npy'):
-            if not os.path.isfile(val):
-                raise FileNotFoundError(f"Numpy file '{val}' not found for input '{input_name}'")
-            try:
-                loaded_val = np.load(val)
-            except Exception as e:
-                raise ValueError(f"Failed to load .npy file '{val}' for '{input_name}': {e}")
-
-            if loaded_val.dtype != expected_dtype:
-                raise TypeError(f"'{input_name}' expected dtype {expected_dtype}, but got {loaded_val.dtype}")
-
-            if list(loaded_val.shape) != list(expected_shape):
-                raise ValueError(f"'{input_name}' expected shape {expected_shape}, but got {loaded_val.shape}")
-        
+            loaded_val = np.load(val)
         else:
-            try:
-                if np.issubdtype(expected_dtype, np.integer):
-                    scalar_val = expected_dtype.type(int(val))
-                elif np.issubdtype(expected_dtype, np.floating):
-                    scalar_val = expected_dtype.type(float(val))
-                else:
-                    raise TypeError(f"Unsupported dtype '{expected_dtype}' for input '{input_name}'")
+            val = int(val)
+            loaded_val = np.array([val], dtype=get_dtype(input_data_types[input_name]))
 
-                loaded_val = np.array([scalar_val], dtype=expected_dtype)
+        result[input_name] = loaded_val
+        i += 2
 
-            except Exception as e:
-                raise ValueError(f"Invalid value '{val}' for input '{input_name}': {e}")
-
-            if list(loaded_val.shape) != list(expected_shape):
-                raise ValueError(f"'{input_name}' expected shape {expected_shape}, got scalar (use .npy file instead)")
-
-        replace_input_node_dict[input_name] = loaded_val
-
-    return replace_input_node_dict
+    return result
