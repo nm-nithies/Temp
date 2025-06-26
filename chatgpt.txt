@@ -1,4 +1,28 @@
-Hi Yvonne,
-Some library files return a LiDARInstance3DBoxes object to JIT functions, which causes issues. We need to update the return type by changing the variable to variable.tensor or variable.data before passing it to JIT.
+import numpy as np
 
-He doesn’t remember the exact file name where this occurs. Could you please share the full error log? That would help us identify the source
+def check_scatternd_pattern(data_shape, indices):
+    """
+    Checks whether the last dimension of `indices` maps consistently to the dimension with size 3 in `data_shape`.
+    """
+    data_shape = tuple(data_shape)
+    indices = np.array(indices)
+
+    # Step 1: Find which dimension in data.shape has size 3
+    try:
+        dim_with_3 = data_shape.index(3)
+    except ValueError:
+        raise ValueError("No dimension with size 3 found in data_shape.")
+
+    # Step 2: indices should have shape (..., 3)
+    if indices.shape[-1] != 3:
+        raise ValueError("The last dimension of indices must be 3.")
+
+    # Step 3: Check if all indices[..., dim_with_3] are the same
+    dim_indices = indices[..., dim_with_3]
+    first_value = dim_indices.flat[0]
+    all_same = np.all(dim_indices == first_value)
+
+    print(f"Dimension with size 3 in data_shape: {dim_with_3}")
+    print(f"All indices along that dim are {'same' if all_same else 'not the same'}, value: {first_value if all_same else 'varies'}")
+
+    return dim_with_3, all_same
