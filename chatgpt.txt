@@ -1,63 +1,11 @@
-  if selected_boxes.shape[0] != 0:
+Could you please trace back the outs in the line out_vars, _ = _flatten(outs)? It seems that outs is a dictionary, and one of the values is likely a LiDARInstance3DBoxes object.
 
-Traceback (most recent call last):
+To resolve the issue, you might need to modify the output like this before export:
 
-  File "/root/workspace/BEVDet/tools/test.py", line 267, in <module>
-
-    main()
-
-  File "/root/workspace/BEVDet/tools/test.py", line 237, in main
-
-    outputs = single_gpu_test(model, data_loader, args.show, args.show_dir)
-
-  File "/root/workspace/BEVDet/mmdet3d/apis/test.py", line 190, in single_gpu_test
-
-    torch.onnx.export(
-
-  File "/opt/venv_new_inf/lib/python3.9/site-packages/torch/onnx/__init__.py", line 350, in export
-
-    return utils.export(
-
-  File "/opt/venv_new_inf/lib/python3.9/site-packages/torch/onnx/utils.py", line 163, in export
-
-    _export(
-
-  File "/opt/venv_new_inf/lib/python3.9/site-packages/torch/onnx/utils.py", line 1074, in _export
-
-    graph, params_dict, torch_out = _model_to_graph(
-
-  File "/opt/venv_new_inf/lib/python3.9/site-packages/torch/onnx/utils.py", line 727, in _model_to_graph
-
-    graph, params, torch_out, module = _create_jit_graph(model, args)
-
-  File "/opt/venv_new_inf/lib/python3.9/site-packages/torch/onnx/utils.py", line 602, in _create_jit_graph
-
-    graph, torch_out = _trace_and_get_graph_from_model(model, args)
-
-  File "/opt/venv_new_inf/lib/python3.9/site-packages/torch/onnx/utils.py", line 517, in _trace_and_get_graph_from_model
-
-    trace_graph, torch_out, inputs_states = torch.jit._get_trace_graph(
-
-  File "/opt/venv_new_inf/lib/python3.9/site-packages/torch/jit/_trace.py", line 1175, in _get_trace_graph
-
-    outs = ONNXTracedModule(f, strict, _force_outplace, return_inputs, _return_inputs_states)(*args, **kwargs)
-
-  File "/opt/venv_new_inf/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1130, in _call_impl
-
-    return forward_call(*input, **kwargs)
-
-  File "/opt/venv_new_inf/lib/python3.9/site-packages/torch/jit/_trace.py", line 127, in forward
-
-    graph, out = torch._C._create_graph_by_tracing(
-
-  File "/opt/venv_new_inf/lib/python3.9/site-packages/torch/jit/_trace.py", line 121, in wrapper
-
-    out_vars, _ = _flatten(outs)
-
-RuntimeError: Only tuples, lists and Variables are supported as JIT inputs/outputs. Dictionaries and strings are also accepted, but their usage is not recommended. Here, received an input of unsupported type: LiDARInstance3DBoxes
-
- 
-The error might be caused by the output export, I see the boxes has introduced such class which seems not able to be converted by pytorch:
-[[{'pts_bbox': {'boxes_3d': LiDARInstance3DBoxes(     tensor([[-8.4021e+00,  4.1226e+00,  3.4800e-01,  1.6951e+00,  5.5263e-01,
- ...
- 
+python
+Copy
+Edit
+output['bboxes_3d'] = output['bboxes_3d'].data  
+# or  
+output['bboxes_3d'] = output['bboxes_3d'].tensor
+This should convert it to a supported format and help avoid the ONNX export error.
