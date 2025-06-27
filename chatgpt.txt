@@ -1,11 +1,11 @@
-Could you please trace back the outs in the line out_vars, _ = _flatten(outs)? It seems that outs is a dictionary, and one of the values is likely a LiDARInstance3DBoxes object.
+ trace back the outs in the line out_vars, _ = _flatten(outs)? It looks like outs is a dictionary, and one of its values might be a LiDARInstance3DBoxes object, which isn’t directly supported by ONNX export.
 
-To resolve the issue, you might need to modify the output like this before export:
+You may want to convert it to a tensor before exporting, like:
 
 python
 Copy
 Edit
-output['bboxes_3d'] = output['bboxes_3d'].data  
+output['bboxes_3d'] = output['bboxes_3d'].tensor  
 # or  
-output['bboxes_3d'] = output['bboxes_3d'].tensor
-This should convert it to a supported format and help avoid the ONNX export error.
+output['bboxes_3d'] = output['bboxes_3d'].data
+This should help avoid the runtime error. Let me know if you’d like me to take a closer look.
