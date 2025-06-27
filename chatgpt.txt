@@ -1,11 +1,63 @@
-    Conditions:
-      - data_shape must have a dimension of size equal to its rank (i.e., len(data_shape)),
-        which is used as the fixed update dimension.
-      - indices must be a 4D tensor with the last dimension equal to len(data_shape).
-      - updates_shape must match data_shape, except dimensions where updates has size 1.
-      - Batch size (first dimension) must match across indices, updates, and data.
-      - All index values along the fixed dimension in indices must be the same.
+  if selected_boxes.shape[0] != 0:
 
-    Returns:
-        True if valid for replacement, else False.
-    """
+Traceback (most recent call last):
+
+  File "/root/workspace/BEVDet/tools/test.py", line 267, in <module>
+
+    main()
+
+  File "/root/workspace/BEVDet/tools/test.py", line 237, in main
+
+    outputs = single_gpu_test(model, data_loader, args.show, args.show_dir)
+
+  File "/root/workspace/BEVDet/mmdet3d/apis/test.py", line 190, in single_gpu_test
+
+    torch.onnx.export(
+
+  File "/opt/venv_new_inf/lib/python3.9/site-packages/torch/onnx/__init__.py", line 350, in export
+
+    return utils.export(
+
+  File "/opt/venv_new_inf/lib/python3.9/site-packages/torch/onnx/utils.py", line 163, in export
+
+    _export(
+
+  File "/opt/venv_new_inf/lib/python3.9/site-packages/torch/onnx/utils.py", line 1074, in _export
+
+    graph, params_dict, torch_out = _model_to_graph(
+
+  File "/opt/venv_new_inf/lib/python3.9/site-packages/torch/onnx/utils.py", line 727, in _model_to_graph
+
+    graph, params, torch_out, module = _create_jit_graph(model, args)
+
+  File "/opt/venv_new_inf/lib/python3.9/site-packages/torch/onnx/utils.py", line 602, in _create_jit_graph
+
+    graph, torch_out = _trace_and_get_graph_from_model(model, args)
+
+  File "/opt/venv_new_inf/lib/python3.9/site-packages/torch/onnx/utils.py", line 517, in _trace_and_get_graph_from_model
+
+    trace_graph, torch_out, inputs_states = torch.jit._get_trace_graph(
+
+  File "/opt/venv_new_inf/lib/python3.9/site-packages/torch/jit/_trace.py", line 1175, in _get_trace_graph
+
+    outs = ONNXTracedModule(f, strict, _force_outplace, return_inputs, _return_inputs_states)(*args, **kwargs)
+
+  File "/opt/venv_new_inf/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1130, in _call_impl
+
+    return forward_call(*input, **kwargs)
+
+  File "/opt/venv_new_inf/lib/python3.9/site-packages/torch/jit/_trace.py", line 127, in forward
+
+    graph, out = torch._C._create_graph_by_tracing(
+
+  File "/opt/venv_new_inf/lib/python3.9/site-packages/torch/jit/_trace.py", line 121, in wrapper
+
+    out_vars, _ = _flatten(outs)
+
+RuntimeError: Only tuples, lists and Variables are supported as JIT inputs/outputs. Dictionaries and strings are also accepted, but their usage is not recommended. Here, received an input of unsupported type: LiDARInstance3DBoxes
+
+ 
+The error might be caused by the output export, I see the boxes has introduced such class which seems not able to be converted by pytorch:
+[[{'pts_bbox': {'boxes_3d': LiDARInstance3DBoxes(     tensor([[-8.4021e+00,  4.1226e+00,  3.4800e-01,  1.6951e+00,  5.5263e-01,
+ ...
+ 
