@@ -18,3 +18,35 @@ class AddConvReluSoftmax(nn.Module):
         out = self.relu(out)
         out = self.softmax(out)
         return out
+
+model1 = AddConvReluSoftmax(input2_shape=torch.Size([]))
+model1.eval()
+
+x1 = torch.randn(1, 3, 256, 256)
+x2 = torch.tensor(2.0)  # scalar input
+
+torch.onnx.export(
+    model1,
+    (x1, x2),
+    "model1.onnx",
+    input_names=["input1", "input2"],
+    output_names=["output"],
+    opset_version=11,
+    dynamic_axes={"input1": {0: "batch"}, "output": {0: "batch"}}
+)
+
+model2 = AddConvReluSoftmax(input2_shape=torch.Size([1, 3, 256, 256]))
+model2.eval()
+
+x1 = torch.randn(1, 3, 256, 256)
+x2 = torch.randn(1, 3, 256, 256)
+
+torch.onnx.export(
+    model2,
+    (x1, x2),
+    "model2.onnx",
+    input_names=["input1", "input2"],
+    output_names=["output"],
+    opset_version=11,
+    dynamic_axes={"input1": {0: "batch"}, "input2": {0: "batch"}, "output": {0: "batch"}}
+)
