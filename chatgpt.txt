@@ -1,12 +1,20 @@
-# Determine the dimension along which updates differ from data (i.e., the target update dimension)
-update_dim = None
-for dim in range(len(updates_shape)):
-    if updates_shape[dim] != data_shape[dim]:
-        update_dim = dim
-        break  # Only one dimension is expected to differ
+import torch
+import torch.nn as nn
 
-# Get the fixed index value used in ScatterND along the target update dimension
-target_index_value = indices[..., update_dim].flat[0]
+class AddConvReluSoftmax(nn.Module):
+    def __init__(self, input2_shape):
+        super(AddConvReluSoftmax, self).__init__()
+        self.input2_shape = input2_shape
+        self.conv = nn.Conv2d(in_channels=3, out_channels=3, kernel_size=3, padding=1)
+        self.relu = nn.ReLU()
+        self.softmax = nn.Softmax(dim=1)
 
-# Get the size of the data tensor along the target update dimension (e.g., number of channels)
-target_dim_size = data_shape[update_dim]
+    def forward(self, x1, x2):
+        # Broadcast input2 if needed
+        if x2.ndim == 0 or x2.shape != x1.shape:
+            x2 = x2.expand_as(x1)
+        out = x1 + x2
+        out = self.conv(out)
+        out = self.relu(out)
+        out = self.softmax(out)
+        return out
