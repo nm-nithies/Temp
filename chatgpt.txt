@@ -1,8 +1,12 @@
-# get index value along the fixed dimension in indices(which has same values)
-                        fixed_dim_index = None
-                        for dim in range(len(updates_shape)):
-                            if updates_shape[dim] != data_shape[dim]:
-                                fixed_dim_index = dim
+# Determine the dimension along which updates differ from data (i.e., the target update dimension)
+update_dim = None
+for dim in range(len(updates_shape)):
+    if updates_shape[dim] != data_shape[dim]:
+        update_dim = dim
+        break  # Only one dimension is expected to differ
 
-                        fixed_channel = indices[..., fixed_dim_index].flat[0]
-                        no_of_channels = data_shape[fixed_dim_index]
+# Get the fixed index value used in ScatterND along the target update dimension
+target_index_value = indices[..., update_dim].flat[0]
+
+# Get the size of the data tensor along the target update dimension (e.g., number of channels)
+target_dim_size = data_shape[update_dim]
