@@ -1,52 +1,46 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
-class AddConvReluSoftmax(nn.Module):
-    def __init__(self, input2_shape):
-        super(AddConvReluSoftmax, self).__init__()
-        self.input2_shape = input2_shape
+class SimpleAddConvModel(nn.Module):
+    def __init__(self):
+        super(SimpleAddConvModel, self).__init__()
         self.conv = nn.Conv2d(in_channels=3, out_channels=3, kernel_size=3, padding=1)
         self.relu = nn.ReLU()
-        self.softmax = nn.Softmax(dim=1)
+        self.softmax = nn.Softmax(dim=1)  # Apply along channel dimension
 
-    def forward(self, x1, x2):
-        # Broadcast input2 if needed
-        if x2.ndim == 0 or x2.shape != x1.shape:
-            x2 = x2.expand_as(x1)
-        out = x1 + x2
-        out = self.conv(out)
-        out = self.relu(out)
-        out = self.softmax(out)
-        return out
+    def forward(self, input1, input2, input3):
+        x = input1 + input2                      # Add #1
+        x = x + input3.view(-1, 1, 1, 1)         # Add #2 (broadcast input3)
+        x = self.conv(x)
+        x = self.relu(x)
+        x = self.softmax(x)
+        return x
 
-model1 = AddConvReluSoftmax(input2_shape=torch.Size([]))
-model1.eval()
 
-x1 = torch.randn(1, 3, 256, 256)
-x2 = torch.tensor(2.0)  # scalar input
+# Create example inputs
+input1 = torch.randn(1, 3, 256, 256)
+input2 = torch.ones(1, 3, 256, 256) * 2  # constant value 2
+input3 = torch.tensor([[2.0]])  # shape: [1,1] → will be broadcasted
 
+
+model = SimpleAddConvModel()
+model.eval()
+
+# Export to ONNX
 torch.onnx.export(
-    model1,
-    (x1, x2),
-    "model1.onnx",
-    input_names=["input1", "input2"],
-    output_names=["output"],
+    model,
+    (input1, input2, input3),
+    "add_conv_model.onnx",
+    input_names=['input1', 'input2', 'input3'],
+    output_names=['output'],
     opset_version=11,
-    dynamic_axes={"input1": {0: "batch"}, "output": {0: "batch"}}
+    dynamic_axes={
+        'input1': {0: 'batch'},
+        'input2': {0: 'batch'},
+        'input3': {0: 'batch'},
+        'output': {0: 'batch'}
+    }
 )
 
-model2 = AddConvReluSoftmax(input2_shape=torch.Size([1, 3, 256, 256]))
-model2.eval()
-
-x1 = torch.randn(1, 3, 256, 256)
-x2 = torch.randn(1, 3, 256, 256)
-
-torch.onnx.export(
-    model2,
-    (x1, x2),
-    "model2.onnx",
-    input_names=["input1", "input2"],
-    output_names=["output"],
-    opset_version=11,
-    dynamic_axes={"input1": {0: "batch"}, "input2": {0: "batch"}, "output": {0: "batch"}}
-)
+print("✅ ONNX model exported to add_conv_model.onnx")
