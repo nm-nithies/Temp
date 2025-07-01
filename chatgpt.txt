@@ -1,46 +1,53 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
-class SimpleAddConvModel(nn.Module):
+class ExactInstanceNormPattern(nn.Module):
     def __init__(self):
-        super(SimpleAddConvModel, self).__init__()
-        self.conv = nn.Conv2d(in_channels=3, out_channels=3, kernel_size=3, padding=1)
-        self.relu = nn.ReLU()
-        self.softmax = nn.Softmax(dim=1)  # Apply along channel dimension
+        super().__init__()
+        # InstanceNorm1d with fixed scale=1 and bias=0
+        self.instancenorm = nn.InstanceNorm1d(32, affine=False)
 
-    def forward(self, input1, input2, input3):
-        x = input1 + input2                      # Add #1
-        x = x + input3.view(-1, 1, 1, 1)         # Add #2 (broadcast input3)
-        x = self.conv(x)
-        x = self.relu(x)
-        x = self.softmax(x)
+        # Scale and bias after reshape
+        self.mul_weight = nn.Parameter(torch.randn(128, 1, 1))  # Learnable scale
+        self.add_bias = nn.Parameter(torch.randn(128, 1, 1))    # Learnable bias
+
+    def forward(self, x):
+        # x: [1, 128, 512, 512]
+        N, C, H, W = x.shape
+
+        # Step 1: reshape to [1, 32, 128*512*512/32] = [1, 32, 1048576]
+        x = x.view(N, 32, -1)
+
+        # Step 2: apply instance normalization with scale=1, bias=0
+        x = self.instancenorm(x)
+
+        # Step 3: reshape back to [1, 128, 512, 512]
+        x = x.view(N, C, H, W)
+
+        # Step 4: Mul (scale per channel)
+        x = x * self.mul_weight
+
+        # Step 5: Add (bias per channel)
+        x = x + self.add_bias
+
         return x
 
-
-# Create example inputs
-input1 = torch.randn(1, 3, 256, 256)
-input2 = torch.ones(1, 3, 256, 256) * 2  # constant value 2
-input3 = torch.tensor([[2.0]])  # shape: [1,1] → will be broadcasted
-
-
-model = SimpleAddConvModel()
+# Instantiate model
+model = ExactInstanceNormPattern()
 model.eval()
+
+# Input tensor
+x = torch.randn(1, 128, 512, 512)
 
 # Export to ONNX
 torch.onnx.export(
     model,
-    (input1, input2, input3),
-    "add_conv_model.onnx",
-    input_names=['input1', 'input2', 'input3'],
-    output_names=['output'],
-    opset_version=11,
-    dynamic_axes={
-        'input1': {0: 'batch'},
-        'input2': {0: 'batch'},
-        'input3': {0: 'batch'},
-        'output': {0: 'batch'}
-    }
+    x,
+    "instancenorm_fusion_pattern.onnx",
+    input_names=["input"],
+    output_names=["output"],
+    dynamic_axes={"input": {0: "batch"}, "output": {0: "batch"}},
+    opset_version=11
 )
 
-print("✅ ONNX model exported to add_conv_model.onnx")
+print("Exported to instancenorm_fusion_pattern.onnx")
