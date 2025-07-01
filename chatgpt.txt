@@ -1,2 +1,10 @@
-Just one minor enhancement: maybe you can add a logger info or debug when the pass is applied, saying the input is replaced by a given constant? So it is more easy for debug
-I think you can also say xxx input is replaced by xxx.npy or xxx value
+for pair in legalize_replace_input_with_constant:
+    ...
+    if val.endswith('.npy'):
+        ...
+        logger.info(f"Input '{input_name}' is replaced with file '{val}'")
+    else:
+        ...
+        logger.info(f"Input '{input_name}' is replaced with scalar value '{scalar_val}', broadcasted to shape {expected_shape}")
+
+    replace_input_node_dict[input_name] = loaded_val
