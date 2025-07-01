@@ -1,18 +1,2 @@
-parser.add_argument(
-    "--legalize_replace_input_with_constant",
-    type=str,
-    nargs="+",
-    action="append",
-    default=None,
-    help=(
-        "Replaces one or more input nodes in the model with constant values. "
-        "Each input must be followed by its replacement value: either a scalar (int or float) or "
-        "an absolute path to a .npy file containing the full tensor data. "
-        "If a scalar value is provided, it will be broadcasted to the full shape of the corresponding input. "
-        "All values will be validated for data type consistency. "
-        "Example usage:\n"
-        "  --legalize_replace_input_with_constant input1 1.0\n"
-        "  --legalize_replace_input_with_constant input2 input2.npy\n"
-        "  --legalize_replace_input_with_constant input1 1 --legalize_replace_input_with_constant input2 input2.npy"
-    )
-)
+Just one minor enhancement: maybe you can add a logger info or debug when the pass is applied, saying the input is replaced by a given constant? So it is more easy for debug
+I think you can also say xxx input is replaced by xxx.npy or xxx value
