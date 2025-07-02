@@ -1,2 +1,4 @@
  "If a scalar value is provided, it will be broadcasted to match the full shape of the corresponding input, "
         "regardless of dimensionality.
+
+Broadcast scalar to expected shape
