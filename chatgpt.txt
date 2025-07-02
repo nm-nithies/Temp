@@ -1,18 +1,22 @@
- else:
-            try:
-                if np.issubdtype(expected_dtype, np.integer):
-                    scalar_val = expected_dtype.type(int(val))
-                elif np.issubdtype(expected_dtype, np.floating):
-                    scalar_val = expected_dtype.type(float(val))
-                else:
-                    raise TypeError(f"Unsupported dtype '{expected_dtype}' for input '{input_name}'")
+else:
+    try:
+        if np.issubdtype(expected_dtype, np.integer):
+            scalar_val = expected_dtype.type(int(val))
+        elif np.issubdtype(expected_dtype, np.floating):
+            scalar_val = expected_dtype.type(float(val))
+        else:
+            raise TypeError(f"Unsupported dtype '{expected_dtype}' for input '{input_name}'")
 
-                # Convert to numpy array
-                loaded_val = np.full(expected_shape, scalar_val, dtype=expected_dtype)
+        if len(expected_shape) != 1:
+            raise ValueError(
+                f"Scalar replacement is only allowed for 1D input shapes. "
+                f"'{input_name}' has shape {expected_shape}. Use a .npy file instead."
+            )
 
-            except Exception as e:
-                raise ValueError(f"Invalid value '{val}' for input '{input_name}': {e}")
+        # Broadcast scalar to 1D shape
+        loaded_val = np.full(expected_shape, scalar_val, dtype=expected_dtype)
 
-        replace_input_node_dict[input_name] = loaded_val
+        logger.info(f"Input '{input_name}' is replaced with scalar value '{scalar_val}', broadcasted to shape {expected_shape}")
 
-    return replace_input_node_dict
+    except Exception as e:
+        raise ValueError(f"Invalid value '{val}' for input '{input_name}': {e}")
