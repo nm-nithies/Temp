@@ -1,1 +1,18 @@
-I analyzed Group Normalization and observed that this pattern can be fused with only a small initial difference. However, the large maximum difference seems to be caused by the subsequent Mul layers, which amplify the minor discrepancy (originally around 0.0001) into a significantly larger deviation.
+ else:
+            try:
+                if np.issubdtype(expected_dtype, np.integer):
+                    scalar_val = expected_dtype.type(int(val))
+                elif np.issubdtype(expected_dtype, np.floating):
+                    scalar_val = expected_dtype.type(float(val))
+                else:
+                    raise TypeError(f"Unsupported dtype '{expected_dtype}' for input '{input_name}'")
+
+                # Convert to numpy array
+                loaded_val = np.full(expected_shape, scalar_val, dtype=expected_dtype)
+
+            except Exception as e:
+                raise ValueError(f"Invalid value '{val}' for input '{input_name}': {e}")
+
+        replace_input_node_dict[input_name] = loaded_val
+
+    return replace_input_node_dict
