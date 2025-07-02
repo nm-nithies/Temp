@@ -1,22 +1,19 @@
-else:
-    try:
-        if np.issubdtype(expected_dtype, np.integer):
-            scalar_val = expected_dtype.type(int(val))
-        elif np.issubdtype(expected_dtype, np.floating):
-            scalar_val = expected_dtype.type(float(val))
-        else:
-            raise TypeError(f"Unsupported dtype '{expected_dtype}' for input '{input_name}'")
-
-        if len(expected_shape) != 1:
-            raise ValueError(
-                f"Scalar replacement is only allowed for 1D input shapes. "
-                f"'{input_name}' has shape {expected_shape}. Use a .npy file instead."
-            )
-
-        # Broadcast scalar to 1D shape
-        loaded_val = np.full(expected_shape, scalar_val, dtype=expected_dtype)
-
-        logger.info(f"Input '{input_name}' is replaced with scalar value '{scalar_val}', broadcasted to shape {expected_shape}")
-
-    except Exception as e:
-        raise ValueError(f"Invalid value '{val}' for input '{input_name}': {e}")
+parser.add_argument(
+    "--legalize_replace_input_with_constant",
+    type=str,
+    nargs="+",
+    action="append",
+    default=None,
+    help=(
+        "Replaces one or more input nodes in the model with constant values. "
+        "Each input must be followed by its replacement value: either a scalar (int or float) or "
+        "an absolute path to a .npy file containing the full tensor data. "
+        "Scalar values are only allowed for 1D input shapes and will be broadcasted to match the full 1D shape. "
+        "For multi-dimensional inputs (e.g., 2D, 4D), a .npy file must be used. "
+        "All values will be validated for data type and shape consistency. "
+        "Example usage:\n"
+        "  --legalize_replace_input_with_constant input1 1.0\n"
+        "  --legalize_replace_input_with_constant input2 input2.npy\n"
+        "  --legalize_replace_input_with_constant input1 1 --legalize_replace_input_with_constant input2 input2.npy"
+    )
+)
