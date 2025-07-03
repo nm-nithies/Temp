@@ -1,5 +1,3 @@
-The ONNX operation seems to have an attribute `stash_type` that can be used to specify the data type used for the calculations, see Operators.md#GroupNormalization
-Maybe this can be used to improve the accuracy? InstanceNormalization does not seem to have this, so maybe it is always using a more accurate data type?
+You're right — I missed the RandomNormalLike op earlier. Since it generates unseeded random values, the latent_sample output will naturally vary. After checking the tensors before this operation (like the moments), I observed much smaller differences — the max_diff is now within acceptable range.
 
-What output of the model do you exactly compare? Do you compare latent_sample?
-This output depend on the output of RandomNormalLike_496 which generates random numbers. If these are real random numbers (instead of pseudo random based on a seed) it is expected that the output latent_sample output will be different. You will have to compare tensors before this operation, eg moments
+Regarding stash_type, I did explore this option. The model input and internal calculations already use float32, and stash_type=1 corresponds to float32 as well. So in this case, explicitly setting stash_type doesn’t improve numerical precision — we're already operating in the most suitable data type for accuracy and stability.
