@@ -2,42 +2,29 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class CustomModel(nn.Module):
+class CustomNet(nn.Module):
     def __init__(self):
-        super().__init__()
-        self.conv = nn.Conv2d(in_channels=3, out_channels=3, kernel_size=3, padding=1)
+        super(CustomNet, self).__init__()
+        self.conv = nn.Conv2d(3, 3, kernel_size=3, padding=1)
 
     def forward(self, input1, input2, input3, input4):
-        # input1, input2: [1, 3, 256, 256]
-        # input3: [1] scalar tensor
-        # input4: [1, 5]
-
-        # Add input1 and input2
-        add1 = input1 + input2
-
-        # Broadcast input3 to input1 shape
-        input3_broadcasted = input3.view(1, 1, 1, 1).expand_as(add1)
-
-        # Add result with broadcasted input3
-        add2 = add1 + input3_broadcasted
-
-        # (Optional use of input4 – if needed to keep it as input)
-        _ = input4  # Not used in computation, but kept as input
-
-        x = self.conv(add2)
-        x = F.relu(x)
-        x = F.softmax(x, dim=1)
-        return x
+        x = input1 + input2               # Element-wise add (same shape)
+        y = x * input3                   # Scalar multiplication (broadcasted)
+        z = y + input4.view(1, 3, 1, 1)  # Broadcast input4 to match shape
+        out = self.conv(z)
+        out = F.relu(out)
+        out = F.softmax(out, dim=1)
+        return out
 
 # Instantiate model
-model = CustomModel()
+model = CustomNet()
 model.eval()
 
-# Create dummy inputs
+# Prepare inputs
 input1 = torch.randn(1, 3, 256, 256)
-input2 = torch.ones(1, 3, 256, 256) * 2  # value = 2
-input3 = torch.tensor([2.0])             # scalar
-input4 = torch.randn(1, 5)               # dummy input
+input2 = torch.full((1, 3, 256, 256), 2.0)           # Constant value 2
+input3 = torch.tensor(2.0)                           # Scalar constant
+input4 = torch.randn(3)                              # Shape: (3,) => to be broadcasted
 
 # Export to ONNX
 torch.onnx.export(
@@ -46,14 +33,13 @@ torch.onnx.export(
     "custom_model.onnx",
     input_names=["input1", "input2", "input3", "input4"],
     output_names=["output"],
+    opset_version=13,
     dynamic_axes={
-        "input1": {0: "batch"},
-        "input2": {0: "batch"},
-        "input3": {0: "batch"},
-        "input4": {0: "batch"},
-        "output": {0: "batch"}
-    },
-    opset_version=13
+        "input1": {0: "batch_size"},
+        "input2": {0: "batch_size"},
+        "input4": {0: "channel"},
+        "output": {0: "batch_size"}
+    }
 )
 
-print("✅ ONNX model exported to custom_model.onnx")
+print("✅ Model exported as 'custom_model.onnx'")
