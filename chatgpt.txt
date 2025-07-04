@@ -1,10 +1,59 @@
-if val.endswith('.npy'):
-    ...
-    logger.info(f"[INFO] Input '{input_name}' is replaced with values loaded from file '{val}'")
-elif len(val_list) == 1:
-    ...
-    logger.info(f"[INFO] Input '{input_name}' is replaced with scalar value '{scalar_val}', "
-                f"broadcasted to shape {expected_shape}")
-else:
-    ...
-    logger.info(f"[INFO] Input '{input_name}' is replaced with reshaped array of shape {loaded_val.shape}")
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+class CustomModel(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.conv = nn.Conv2d(in_channels=3, out_channels=3, kernel_size=3, padding=1)
+
+    def forward(self, input1, input2, input3, input4):
+        # input1, input2: [1, 3, 256, 256]
+        # input3: [1] scalar tensor
+        # input4: [1, 5]
+
+        # Add input1 and input2
+        add1 = input1 + input2
+
+        # Broadcast input3 to input1 shape
+        input3_broadcasted = input3.view(1, 1, 1, 1).expand_as(add1)
+
+        # Add result with broadcasted input3
+        add2 = add1 + input3_broadcasted
+
+        # (Optional use of input4 – if needed to keep it as input)
+        _ = input4  # Not used in computation, but kept as input
+
+        x = self.conv(add2)
+        x = F.relu(x)
+        x = F.softmax(x, dim=1)
+        return x
+
+# Instantiate model
+model = CustomModel()
+model.eval()
+
+# Create dummy inputs
+input1 = torch.randn(1, 3, 256, 256)
+input2 = torch.ones(1, 3, 256, 256) * 2  # value = 2
+input3 = torch.tensor([2.0])             # scalar
+input4 = torch.randn(1, 5)               # dummy input
+
+# Export to ONNX
+torch.onnx.export(
+    model,
+    (input1, input2, input3, input4),
+    "custom_model.onnx",
+    input_names=["input1", "input2", "input3", "input4"],
+    output_names=["output"],
+    dynamic_axes={
+        "input1": {0: "batch"},
+        "input2": {0: "batch"},
+        "input3": {0: "batch"},
+        "input4": {0: "batch"},
+        "output": {0: "batch"}
+    },
+    opset_version=13
+)
+
+print("✅ ONNX model exported to custom_model.onnx")
