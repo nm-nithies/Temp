@@ -1,3 +1,5 @@
 Explored rotary positional embeddings and the positional encoding patterns used in LLaMA2 and LLaMA3. Since this operation is available in opset 23, we can proceed with adding support for rotary positional embeddings and validate it once runtime support becomes available.
 
 Also started working on adding support for 1D scalar values in replace_input_with_constant, as mentioned in the JIRA ticket.
+
+I checked stash_type — the model input and internal computations already use float32, and the default value stash_type=1 also corresponds to float32. So, explicitly setting it doesn't provide any gain in numerical precision in this case
