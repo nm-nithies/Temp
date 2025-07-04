@@ -1,1 +1,10 @@
-Need to add a few unit test/model tests into regression for such new feature usage demo and validation.
+if val.endswith('.npy'):
+    ...
+    logger.info(f"[INFO] Input '{input_name}' is replaced with values loaded from file '{val}'")
+elif len(val_list) == 1:
+    ...
+    logger.info(f"[INFO] Input '{input_name}' is replaced with scalar value '{scalar_val}', "
+                f"broadcasted to shape {expected_shape}")
+else:
+    ...
+    logger.info(f"[INFO] Input '{input_name}' is replaced with reshaped array of shape {loaded_val.shape}")
