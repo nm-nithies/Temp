@@ -1,45 +1,20 @@
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-
-class CustomNet(nn.Module):
-    def __init__(self):
-        super(CustomNet, self).__init__()
-        self.conv = nn.Conv2d(3, 3, kernel_size=3, padding=1)
-
-    def forward(self, input1, input2, input3, input4):
-        x = input1 + input2               # Element-wise add (same shape)
-        y = x * input3                   # Scalar multiplication (broadcasted)
-        z = y + input4.view(1, 3, 1, 1)  # Broadcast input4 to match shape
-        out = self.conv(z)
-        out = F.relu(out)
-        out = F.softmax(out, dim=1)
-        return out
-
-# Instantiate model
-model = CustomNet()
-model.eval()
-
-# Prepare inputs
-input1 = torch.randn(1, 3, 256, 256)
-input2 = torch.full((1, 3, 256, 256), 2.0)           # Constant value 2
-input3 = torch.tensor(2.0)                           # Scalar constant
-input4 = torch.randn(3)                              # Shape: (3,) => to be broadcasted
-
-# Export to ONNX
-torch.onnx.export(
-    model,
-    (input1, input2, input3, input4),
-    "custom_model.onnx",
-    input_names=["input1", "input2", "input3", "input4"],
-    output_names=["output"],
-    opset_version=13,
-    dynamic_axes={
-        "input1": {0: "batch_size"},
-        "input2": {0: "batch_size"},
-        "input4": {0: "channel"},
-        "output": {0: "batch_size"}
-    }
+parser.add_argument(
+    "--legalize_replace_input_with_constant",
+    type=str,
+    nargs="+",
+    action="append",
+    default=None,
+    help=(
+        "Replaces one or more input nodes in the model with constant values. "
+        "Each input must be followed by its replacement value(s): either a scalar (int or float), "
+        "a list of values representing a 1D array, or the absolute path to a .npy file containing the full tensor. "
+        "Only scalar values or 1D arrays can be provided directly; for higher-dimensional inputs, a .npy file is required. "
+        "If a list of values is provided, it will be reshaped to match the expected input shape, or an error will be raised if the reshape is not possible "
+        "(e.g., values like '32' can be reshaped to [1, 1, 1, 32] or [32, 1, 1] if those are the expected shapes). "
+        "All values are validated for data type and shape consistency against the model input. "
+        "Example usage:\n"
+        "  --legalize_replace_input_with_constant input1 1.0\n"
+        "  --legalize_replace_input_with_constant input2 input2.npy\n"
+        "  --legalize_replace_input_with_constant input3 1 2 3"
+    )
 )
-
-print("✅ Model exported as 'custom_model.onnx'")
