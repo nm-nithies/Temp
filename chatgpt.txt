@@ -2,47 +2,50 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class CustomNetWithBool(nn.Module):
+class CustomNetWithBoolNoIf(nn.Module):
     def __init__(self):
-        super(CustomNetWithBool, self).__init__()
+        super(CustomNetWithBoolNoIf, self).__init__()
         self.conv = nn.Conv2d(3, 3, kernel_size=3, padding=1)
         self.linear = nn.Conv2d(3, 3, kernel_size=1)
 
-    def forward(self, input1, input2, input3, input4, input5: torch.Tensor):
-        x = input1 + input2                       # [1, 3, 256, 256]
-        y = x * input3                            # scalar * tensor
-        z = y + input4.view(1, 3, 1, 1)           # [1, 3, 256, 256]
-        out = self.conv(z)
+    def forward(self, input1, input2, input3, input4, input5):
+        x = input1 + input2                    # [1, 3, 256, 256]
+        y = x * input3                         # scalar * tensor
+        z = y + input4.view(1, 3, 1, 1)        # broadcast input4
+        conv_out = self.conv(z)
 
-        # 👇 Ensure bool input5 affects ONNX graph
-        if input5.item():
-            out = F.relu(out)
-        else:
-            out = self.linear(out)
+        # Use float version of input5 to avoid control flow
+        selector = input5.to(dtype=conv_out.dtype)
+
+        # Blend between relu and linear using input5
+        relu_out = F.relu(conv_out)
+        linear_out = self.linear(conv_out)
+
+        # Equivalent to: if input5: use relu_out else: use linear_out
+        out = selector * relu_out + (1.0 - selector) * linear_out
 
         return out
-model = CustomNetWithBool()
-model.eval()
 
-# Scripted version to preserve control flow
-scripted_model = torch.jit.script(model)
+# Instantiate and eval mode
+model = CustomNetWithBoolNoIf()
+model.eval()
 
 # Dummy inputs
 input1 = torch.randn(1, 3, 256, 256)
 input2 = torch.full((1, 3, 256, 256), 2.0)
-input3 = torch.tensor(2.0)
-input4 = torch.randn(3)
-input5 = torch.tensor(True)  # 👈 Scalar bool input
+input3 = torch.tensor(2.0)                         # scalar float
+input4 = torch.randn(3)                            # shape [3]
+input5 = torch.tensor(True)                        # scalar bool
 
 # Export to ONNX
 torch.onnx.export(
-    scripted_model,
+    model,
     (input1, input2, input3, input4, input5),
-    "custom_model_with_bool.onnx",
+    "custom_model_no_if.onnx",
     input_names=["input1", "input2", "input3", "input4", "input5"],
     output_names=["output"],
     opset_version=13,
     dynamic_axes=None
 )
 
-print("✅ Model exported with boolean input preserved in Netron")
+print("✅ Exported 'custom_model_no_if.onnx' without graph split")
