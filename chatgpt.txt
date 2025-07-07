@@ -1,4 +1,13 @@
-                if np.issubdtype(expected_dtype, np.integer):
-                    flat_array = np.array([int(v) for v in val_list], dtype=expected_dtype)
-                elif np.issubdtype(expected_dtype, np.floating):
-                    flat_array = np.array([float(v) for v in val_list], dtype=expected_dtype)
+elif np.issubdtype(expected_dtype, np.bool_):
+    try:
+        bool_list = []
+        for v in val_list:
+            v_str = str(v).strip()
+            if v_str == "True":
+                bool_list.append(True)
+            elif v_str == "False":
+                bool_list.append(False)
+            else:
+                logger.error(f"[ERROR] Only 'True' or 'False' (case-sensitive) are allowed for input '{input_name}', but got '{v}'")
+                sys.exit(-1)
+        flat_array = np.array(bool_list, dtype=expected_dtype)
