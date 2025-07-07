@@ -1,40 +1,44 @@
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class CustomNet(nn.Module):
+class CustomNetWithBool(nn.Module):
     def __init__(self):
-        super(CustomNet, self).__init__()
+        super(CustomNetWithBool, self).__init__()
         self.conv = nn.Conv2d(3, 3, kernel_size=3, padding=1)
 
-    def forward(self, input1, input2, input3, input4):
-        x = input1 + input2               # Element-wise add (same shape)
-        y = x * input3                   # Scalar multiplication (broadcasted)
-        z = y + input4.view(1, 3, 1, 1)  # Broadcast input4 to match shape
+    def forward(self, input1, input2, input3, input4, input5):
+        x = input1 + input2                # Element-wise add (same shape)
+        y = x * input3                     # Scalar multiplication (broadcasted)
+        z = y + input4.view(1, 3, 1, 1)    # Broadcast input4 to match shape
         out = self.conv(z)
         out = F.relu(out)
-        out = F.softmax(out, dim=1)
+
+        # Conditional branch using the bool input
+        if input5:
+            out = F.softmax(out, dim=1)    # Apply softmax if input5 is True
+
         return out
 
 # Instantiate model
-model = CustomNet()
+model = CustomNetWithBool()
 model.eval()
 
 # Prepare inputs
 input1 = torch.randn(1, 3, 256, 256)
-input2 = torch.full((1, 3, 256, 256), 2.0)           # Constant value 2
-input3 = torch.tensor(2.0)                           # Scalar constant
-input4 = torch.randn(3)                              # Shape: (3,) => to be broadcasted
+input2 = torch.full((1, 3, 256, 256), 2.0)
+input3 = torch.tensor(2.0)                # Scalar float
+input4 = torch.randn(3)                   # Shape: (3,)
+input5 = torch.tensor(True)               # Scalar boolean
 
 # Export to ONNX
 torch.onnx.export(
     model,
-    (input1, input2, input3, input4),
-    "custom_model.onnx",
-    input_names=["input1", "input2", "input3", "input4"],
+    (input1, input2, input3, input4, input5),
+    "custom_model_with_bool.onnx",
+    input_names=["input1", "input2", "input3", "input4", "input5"],
     output_names=["output"],
     opset_version=13,
 )
 
-print("✅ Model exported as 'custom_model.onnx'")
+print("✅ Model with bool input exported as 'custom_model_with_bool.onnx'")
