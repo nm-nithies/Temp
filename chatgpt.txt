@@ -1,4 +1,1 @@
-# input1: float32[1, 3, 256, 256]
-# input2: float32[1, 3, 256, 256]
-# input3: float32
-# input4: float32[3]
+For this case. I am not allowing only int32.  https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/blob/5e342b892a1d7ff1264ff85a0d0dc59a3d4e6f68/nnac/legalizer/replace_input_with_constant.py#L119  I am allowing the expected data_type which is in the original model 
