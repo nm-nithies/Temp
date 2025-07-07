@@ -6,39 +6,43 @@ class CustomNetWithBool(nn.Module):
     def __init__(self):
         super(CustomNetWithBool, self).__init__()
         self.conv = nn.Conv2d(3, 3, kernel_size=3, padding=1)
+        self.linear = nn.Conv2d(3, 3, kernel_size=1)
 
-    def forward(self, input1, input2, input3, input4, input5):
-        x = input1 + input2                # Element-wise add (same shape)
-        y = x * input3                     # Scalar multiplication (broadcasted)
-        z = y + input4.view(1, 3, 1, 1)    # Broadcast input4 to match shape
+    def forward(self, input1, input2, input3, input4, input5: torch.Tensor):
+        x = input1 + input2                       # [1, 3, 256, 256]
+        y = x * input3                            # scalar * tensor
+        z = y + input4.view(1, 3, 1, 1)           # [1, 3, 256, 256]
         out = self.conv(z)
-        out = F.relu(out)
 
-        # Conditional branch using the bool input
-        if input5:
-            out = F.softmax(out, dim=1)    # Apply softmax if input5 is True
+        # 👇 Ensure bool input5 affects ONNX graph
+        if input5.item():
+            out = F.relu(out)
+        else:
+            out = self.linear(out)
 
         return out
-
-# Instantiate model
 model = CustomNetWithBool()
 model.eval()
 
-# Prepare inputs
+# Scripted version to preserve control flow
+scripted_model = torch.jit.script(model)
+
+# Dummy inputs
 input1 = torch.randn(1, 3, 256, 256)
 input2 = torch.full((1, 3, 256, 256), 2.0)
-input3 = torch.tensor(2.0)                # Scalar float
-input4 = torch.randn(3)                   # Shape: (3,)
-input5 = torch.tensor(True)               # Scalar boolean
+input3 = torch.tensor(2.0)
+input4 = torch.randn(3)
+input5 = torch.tensor(True)  # 👈 Scalar bool input
 
 # Export to ONNX
 torch.onnx.export(
-    model,
+    scripted_model,
     (input1, input2, input3, input4, input5),
     "custom_model_with_bool.onnx",
     input_names=["input1", "input2", "input3", "input4", "input5"],
     output_names=["output"],
     opset_version=13,
+    dynamic_axes=None
 )
 
-print("✅ Model with bool input exported as 'custom_model_with_bool.onnx'")
+print("✅ Model exported with boolean input preserved in Netron")
