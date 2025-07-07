@@ -1,6 +1,40 @@
-  only_float = any('.' in v or 'e' in v.lower() for v in val_list)
-                only_int = all(v.isdigit() or (v.startswith('-') and v[1:].isdigit()) for v in val_list)
 
-                if only_float and only_int:
-                    logger.error(f"[ERROR] Mixed int, float types and are not supported: {val_list}")
-                    sys.exit(-1)
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+class CustomNet(nn.Module):
+    def __init__(self):
+        super(CustomNet, self).__init__()
+        self.conv = nn.Conv2d(3, 3, kernel_size=3, padding=1)
+
+    def forward(self, input1, input2, input3, input4):
+        x = input1 + input2               # Element-wise add (same shape)
+        y = x * input3                   # Scalar multiplication (broadcasted)
+        z = y + input4.view(1, 3, 1, 1)  # Broadcast input4 to match shape
+        out = self.conv(z)
+        out = F.relu(out)
+        out = F.softmax(out, dim=1)
+        return out
+
+# Instantiate model
+model = CustomNet()
+model.eval()
+
+# Prepare inputs
+input1 = torch.randn(1, 3, 256, 256)
+input2 = torch.full((1, 3, 256, 256), 2.0)           # Constant value 2
+input3 = torch.tensor(2.0)                           # Scalar constant
+input4 = torch.randn(3)                              # Shape: (3,) => to be broadcasted
+
+# Export to ONNX
+torch.onnx.export(
+    model,
+    (input1, input2, input3, input4),
+    "custom_model.onnx",
+    input_names=["input1", "input2", "input3", "input4"],
+    output_names=["output"],
+    opset_version=13,
+)
+
+print("✅ Model exported as 'custom_model.onnx'")
