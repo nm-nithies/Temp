@@ -1,1 +1,18 @@
-In this case, I’m not restricting to only int32. I allow the data type that matches the one used in the original model
+        elif len(val_list) == 1:
+            val = val_list[0]
+            try:
+                if np.issubdtype(expected_dtype, np.integer):
+                    scalar_val = expected_dtype.type(int(val))
+                elif np.issubdtype(expected_dtype, np.floating):
+                    scalar_val = expected_dtype.type(float(val))
+                else:
+                    logger.error(f"[ERROR] Unsupported dtype '{expected_dtype}' for input '{input_name}'")
+                    sys.exit(-1)
+
+                # Broadcast scalar to expected shape
+                loaded_val = np.full(expected_shape, scalar_val, dtype=expected_dtype)
+
+            except Exception as e:
+                logger.error(f"[ERROR] Invalid scalar value '{val}' for input '{input_name}': {e}")
+                sys.exit(-1)
+
