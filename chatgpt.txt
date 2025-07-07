@@ -1,20 +1,4 @@
-parser.add_argument(
-    "--legalize_replace_input_with_constant",
-    type=str,
-    nargs="+",
-    action="append",
-    default=None,
-    help=(
-        "Replaces one or more input nodes in the model with constant values. "
-        "Each input must be followed by its replacement value(s): either a scalar (int or float), "
-        "a list of values representing a 1D array, or the absolute path to a .npy file containing the full tensor. "
-        "Only scalar values or 1D arrays can be provided directly; for higher-dimensional inputs, a .npy file is required. "
-        "If a list of values is provided, it will be reshaped to match the expected input shape, or an error will be raised if the reshape is not possible "
-        "(e.g., values like '32' can be reshaped to [1, 1, 1, 32] or [32, 1, 1] if those are the expected shapes). "
-        "All values are validated for data type and shape consistency against the model input. "
-        "Example usage:\n"
-        "  --legalize_replace_input_with_constant input1 1.0\n"
-        "  --legalize_replace_input_with_constant input2 input2.npy\n"
-        "  --legalize_replace_input_with_constant input3 1 2 3"
-    )
-)
+# input1: float32[1, 3, 256, 256]
+# input2: float32[1, 3, 256, 256]
+# input3: float32
+# input4: float32[3]
