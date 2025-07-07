@@ -1,8 +1,8 @@
 elif np.issubdtype(expected_dtype, np.bool_):
-    val_str = str(val).strip().lower()
-    if val_str == "true":
+    val_str = str(val).strip()
+    if val_str == "True":
         scalar_val = expected_dtype.type(True)
-    elif val_str == "false":
+    elif val_str == "False":
         scalar_val = expected_dtype.type(False)
     else:
-        raise ValueError(f"Only 'True' or 'False' (case-insensitive) are supported for boolean input '{input_name}', but got '{val}'")
+        raise ValueError(f"Only 'True' or 'False' (case-sensitive) are supported for boolean input '{input_name}', but got '{val}'")
