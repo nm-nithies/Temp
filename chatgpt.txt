@@ -1,13 +1,6 @@
-elif np.issubdtype(expected_dtype, np.bool_):
-    try:
-        bool_list = []
-        for v in val_list:
-            v_str = str(v).strip()
-            if v_str == "True":
-                bool_list.append(True)
-            elif v_str == "False":
-                bool_list.append(False)
-            else:
-                logger.error(f"[ERROR] Only 'True' or 'False' (case-sensitive) are allowed for input '{input_name}', but got '{v}'")
-                sys.exit(-1)
-        flat_array = np.array(bool_list, dtype=expected_dtype)
+  only_float = any('.' in v or 'e' in v.lower() for v in val_list)
+                only_int = all(v.isdigit() or (v.startswith('-') and v[1:].isdigit()) for v in val_list)
+
+                if only_float and only_int:
+                    logger.error(f"[ERROR] Mixed int, float types and are not supported: {val_list}")
+                    sys.exit(-1)
