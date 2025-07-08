@@ -1,26 +1,35 @@
-        from mmcv.ops import ModulatedDeformConv2d
+import numpy as np
 
-        @onnx_op(
-            op_type=MMCV_DOMAIN + "::MMCVModulatedDeformConv2d",
-            inputs=[
-                PyCustomOpDef.dt_float,
-                PyCustomOpDef.dt_float,
-                PyCustomOpDef.dt_float,
-                PyCustomOpDef.dt_float,
-            ],
-            outputs=[PyCustomOpDef.dt_float],
-            domain=MMCV_DOMAIN,
-        )
-        def MMCVModulatedDeformConv2d(input, offset, mask, weight, **kwargs):
-            input = torch.from_numpy(input)
-            offset = torch.from_numpy(offset)
-            weight = torch.from_numpy(weight)
-            mask = torch.from_numpy(mask)
-            modulated_conv = ModulatedDeformConv2d(
-                in_channels=weight.shape[1],
-                out_channels=weight.shape[0],
-                kernel_size=(weight.shape[2], weight.shape[3]),
-                padding=1
-            )
-            modulated_conv.weight.data = weight
-            return modulated_conv(input, offset, mask)
+def _rms_normalization(
+    X: np.ndarray,
+    W: np.ndarray,
+    axis: int = -1,
+    epsilon: float = 1e-5,
+) -> np.ndarray:
+    shape = X.shape
+    rank = len(shape)
+    if axis < 0:
+        axis = axis + rank
+
+    x_squared = np.power(X, 2)
+    x_squared_mean = np.mean(
+        x_squared, axis=tuple(range(axis, len(shape))), keepdims=True
+    )
+    rmseps = x_squared_mean + epsilon
+    rms = np.sqrt(rmseps)
+    rms_reciprocal = np.reciprocal(rms)
+
+    y_mat = X * rms_reciprocal
+    Y = y_mat * W
+
+    return Y.astype(X.dtype)
+
+# Sample input
+X = np.random.randn(2, 4, 8).astype(np.float32)  # Shape: (2, 4, 8)
+W = np.ones((1, 1, 8), dtype=np.float32)         # Shape matches last dimension
+
+# Run the function
+output = _rms_normalization(X, W, axis=-1)
+
+print("Output shape:", output.shape)
+print("Output:", output)
