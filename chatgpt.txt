@@ -1,60 +1,26 @@
-import numpy as np
-import onnx
-import onnxruntime as ort
-from onnxscript import script, opset23
-from onnx import helper, TensorProto
-from onnxscript import Values
+        from mmcv.ops import ModulatedDeformConv2d
 
-# Define a custom ONNX op that wraps RotaryEmbedding
-@script()
-def MyRotaryEmbedding(input, sincos):  # custom op name
-    return opset23.RotaryEmbedding(input, sincos)
-
-# Export it as a FunctionProto
-func_proto = MyRotaryEmbedding.to_function_proto()
-func_proto.domain = "mydomain"
-func_proto.name = "MyRotaryEmbedding"
-
-# Build a model using the custom op
-node = helper.make_node(
-    "MyRotaryEmbedding",
-    inputs=["input", "sincos"],
-    outputs=["output"],
-    domain="mydomain"
-)
-
-graph = helper.make_graph(
-    [node],
-    "MyGraph",
-    inputs=[
-        helper.make_tensor_value_info("input", TensorProto.FLOAT, [1, 2, 4]),
-        helper.make_tensor_value_info("sincos", TensorProto.FLOAT, [1, 2, 4])
-    ],
-    outputs=[
-        helper.make_tensor_value_info("output", TensorProto.FLOAT, [1, 2, 4])
-    ]
-)
-
-# Set up opset imports
-model = helper.make_model(
-    graph,
-    opset_imports=[
-        helper.make_opsetid("mydomain", 1),
-        helper.make_opsetid("", 23)  # RotaryEmbedding is in standard domain, opset 23
-    ],
-    producer_name="custom_model"
-)
-model.functions.append(func_proto)
-
-# Save the model
-onnx.save(model, "my_rotary_model.onnx")
-print("Saved model to my_rotary_model.onnx")
-
-# Prepare dummy inputs
-input_data = np.random.randn(1, 2, 4).astype(np.float32)
-sincos_data = np.random.randn(1, 2, 4).astype(np.float32)
-
-# Run inference using ONNX Runtime
-session = ort.InferenceSession("my_rotary_model.onnx", providers=["CPUExecutionProvider"])
-outputs = session.run(None, {"input": input_data, "sincos": sincos_data})
-print("Output:\n", outputs[0])
+        @onnx_op(
+            op_type=MMCV_DOMAIN + "::MMCVModulatedDeformConv2d",
+            inputs=[
+                PyCustomOpDef.dt_float,
+                PyCustomOpDef.dt_float,
+                PyCustomOpDef.dt_float,
+                PyCustomOpDef.dt_float,
+            ],
+            outputs=[PyCustomOpDef.dt_float],
+            domain=MMCV_DOMAIN,
+        )
+        def MMCVModulatedDeformConv2d(input, offset, mask, weight, **kwargs):
+            input = torch.from_numpy(input)
+            offset = torch.from_numpy(offset)
+            weight = torch.from_numpy(weight)
+            mask = torch.from_numpy(mask)
+            modulated_conv = ModulatedDeformConv2d(
+                in_channels=weight.shape[1],
+                out_channels=weight.shape[0],
+                kernel_size=(weight.shape[2], weight.shape[3]),
+                padding=1
+            )
+            modulated_conv.weight.data = weight
+            return modulated_conv(input, offset, mask)
