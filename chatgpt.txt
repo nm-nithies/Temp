@@ -1,1 +1,31 @@
-lsof | grep deleted | grep nithies
+import torch
+import torch.nn as nn
+
+class ReduceL2DivModel(nn.Module):
+    def __init__(self):
+        super().__init__()
+        # Constant tensor of shape [1536]
+        self.const = nn.Parameter(torch.randn(1536), requires_grad=False)
+
+    def forward(self, x):
+        # x: [1, 1536]
+        reduce_l2 = torch.norm(x, p=2, dim=-1, keepdim=True)  # a: [1, 1]
+        mul = x * self.const  # b: [1, 1536]
+        out = mul / reduce_l2  # broadcasting b / a
+        return out
+
+# Create model and dummy input
+model = ReduceL2DivModel()
+dummy_input = torch.randn(1, 1536)
+
+# Export to ONNX
+torch.onnx.export(
+    model,
+    dummy_input,
+    "reduceL2_mul_div.onnx",
+    input_names=["input"],
+    output_names=["output"],
+    opset_version=13,
+    dynamic_axes={"input": {0: "batch"}, "output": {0: "batch"}},
+)
+print("Exported to reduceL2_mul_div.onnx")
