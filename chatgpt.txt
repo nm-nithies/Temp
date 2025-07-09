@@ -1,1 +1,3 @@
-4092608 nithies   20   0   37.1g  25.7g 170724 R  99.7   5.1   4:33.31 python 
+              total        used        free      shared  buff/cache   available
+Mem:          503Gi        61Gi       101Gi       1.0Gi       340Gi       436Gi
+Swap:         255Gi        49Gi       206Gi
