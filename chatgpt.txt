@@ -1,2 +1,7 @@
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-onnxruntime.capi.onnxruntime_pybind11_state.InvalidGraph: [ONNXRuntimeError] : 10 : INVALID_GRAPH : Load model from /remote/us01sgnfs00562/NNSDK/nithies/nnsdk/nnac/frontend/inference_2025_07_08_10_42_21.onnx failed:This is an invalid model. In Node, ("/layers.0/input_layernorm/Mul_output_0/rmsnorm", RMSNormalizations, "mmcv", -1) : ("/layers.0/input_layernorm/Cast_output_0": tensor(float),"/layers.0/input_layernorm/Mul_output_0/rmsnorm_scale": tensor(float),) -> ("/layers.0/input_layernorm/Mul_output_0/rmsnorm": tensor(float),) , Error Node(/layers.0/input_layernorm/Mul_output_0/rmsnorm) with schema(mmcv::RMSNormalizations:1) has input size 2 not in range [min=3, max=3].
+Explored the possibility of fusing the QwenVL_E_compress pattern into rms_normalization.
+Added custom ops for RmsNormalization and RotaryEmbedding.
+Fixed issues in the FusePrimitivesIntoRmsnorm pass and validated it.
+
+Due to the large model size, the process was frequently killed (disk quota exceeded). So, tested the pattern on a smaller normalization subgraph instead.
+
+Encountered max_diff issues and some bugs in the clean_redundant_nodes_and_initializers function, which sometimes results in the entire model being erased.
