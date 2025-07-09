@@ -1,1 +1,1 @@
-du -ah /remote/us01sgnfs00562/nithies | sort -rh | head -n 30
+lsof | grep deleted | grep nithies
