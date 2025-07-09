@@ -1,3 +1,4 @@
-              total        used        free      shared  buff/cache   available
-Mem:          503Gi        61Gi       101Gi       1.0Gi       340Gi       436Gi
-Swap:         255Gi        49Gi       206Gi
+Disk quotas for user nithies (uid 10073402): 
+     Filesystem   space   quota   limit   grace   files   quota   limit   grace
+us01cm07-t2-fs:/US01SGNFS00562/us01sgnfs00562
+                   300G    300G    300G            815k   4295m   4295m
