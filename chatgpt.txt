@@ -1,4 +1,1 @@
-Disk quotas for user nithies (uid 10073402): 
-     Filesystem   space   quota   limit   grace   files   quota   limit   grace
-us01cm07-t2-fs:/US01SGNFS00562/us01sgnfs00562
-                   300G    300G    300G            815k   4295m   4295m
+du -ah /remote/us01sgnfs00562/nithies | sort -rh | head -n 30
