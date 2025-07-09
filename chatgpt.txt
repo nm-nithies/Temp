@@ -1,7 +1,1 @@
-Explored the possibility of fusing the QwenVL_E_compress pattern into rms_normalization.
-Added custom ops for RmsNormalization and RotaryEmbedding.
-Fixed issues in the FusePrimitivesIntoRmsnorm pass and validated it.
-
-Due to the large model size, the process was frequently killed (disk quota exceeded). So, tested the pattern on a smaller normalization subgraph instead.
-
-Encountered max_diff issues and some bugs in the clean_redundant_nodes_and_initializers function, which sometimes results in the entire model being erased.
+4092608 nithies   20   0   37.1g  25.7g 170724 R  99.7   5.1   4:33.31 python 
