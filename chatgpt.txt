@@ -1,4 +1,30 @@
-from onnxscript import opset19 as op
-from onnx import TensorProto
+import torch
+import torch.nn as nn
 
-neg_one = op.Constant(value_ints=[-1], dtype=TensorProto.INT64)
+class CustomRMSNormWithExtraMul(nn.Module):
+    def __init__(self, dim, eps=1e-8):
+        super().__init__()
+        self.gamma = nn.Parameter(torch.randn(dim))  # (4096,)
+        self.eps = eps
+
+    def forward(self, x):
+        # x: shape (1, 1, 4096)
+        squared = x.pow(2)
+        mean = squared.mean(dim=-1, keepdim=True)  # axis=1
+        denom = torch.sqrt(mean + self.eps)
+        normed = 1 / denom
+        multiplied = x * normed  # Extra Mul(x, normed)
+        out = multiplied * self.gamma
+        return out
+
+# Instantiate and test
+model = CustomRMSNormWithExtraMul(dim=4096)
+x = torch.randn(1, 1026, 4096)
+out = model(x)
+
+# Export to ONNX
+torch.onnx.export(
+    model, x, "rmsnorm_with_extra_mul.onnx",
+    input_names=["input"], output_names=["output"],
+    opset_version=13
+)
