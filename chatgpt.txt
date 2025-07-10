@@ -1,4 +1,40 @@
-onnxruntime.capi.onnxruntime_pybind11_state.Fail: [ONNXRuntimeError] : 1 : FAIL : Node (/Mul_output_0/rmsnorm) Op (RMSNormalization) [ShapeInferenceError] Inference error(s): (op_type:Constant, node name: n4): [ShapeInferenceError] Attribute 'value_int' expect an integer.
-(op_type:Add, node name: n7): [TypeInferenceError] Input 0 expected to have type but instead is null
-(op_type:Where, node name: n8): [TypeInferenceError] Input 1 expected to have type but instead is null
-(op_type:Unsqueeze, node name: n9): [TypeInferenceError] Input 0 expected to have type but instead is null
+from onnxscript import script, opset19 as op
+from onnxscript.values import Opset
+
+local = Opset("snps.onnx.local", 1)
+
+@script(local)
+def RMSNormalization(X, W, axis: int = -1, epsilon: float = 1e-5):
+    # Prepare constants
+    zero = op.Constant(value_ints=[0])
+    one = op.Constant(value_float=1.0)
+    two = op.Constant(value_float=2.0)
+
+    # X²
+    x_sq = op.Pow(X, two)
+
+    # Shape of input and rank
+    shape = op.Shape(X)
+    rank = op.Size(shape)  # scalar tensor
+
+    # Axis adjustment (support for negative axis)
+    axis_tensor = op.Constant(value_ints=[axis])  # use value_ints and wrap in list
+    axis_scalar = op.Reshape(axis_tensor, zero)   # convert to scalar
+
+    axis_fixed = op.Where(op.Less(axis_scalar, rank), axis_scalar, op.Add(axis_scalar, rank))
+
+    # ReduceMean over axis
+    axes = op.Reshape(axis_fixed, zero)
+    mean = op.ReduceMean(x_sq, axes=axes, keepdims=1)
+
+    # epsilon to tensor with shape of mean
+    eps_scalar = op.Constant(value_float=epsilon)
+    eps_tensor = op.Expand(op.Reshape(eps_scalar, zero), op.Shape(mean))
+
+    var = op.Add(mean, eps_tensor)
+    rms = op.Sqrt(var)
+    inv_rms = op.Reciprocal(rms)
+
+    normalized = op.Mul(X, inv_rms)
+    Y = op.Mul(normalized, W)
+    return Y
