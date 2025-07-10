@@ -1,39 +1,4 @@
-from onnxscript import script, opset19 as op
-from onnxscript.values import Opset
-
-local = Opset("snps.onnx.local", 1)
-
-@script(local)
-def RMSNormalization(X, W, axis: int = -1, epsilon: float = 1e-5):
-    # Step 1: X²
-    x_sq = op.Pow(X, op.Constant(value_float=2.0))
-
-    # Step 2: Mean over last dimension(s)
-    shape = op.Shape(X)
-    rank = op.Size(shape)
-
-    # Handle negative axis dynamically
-    axis_const = op.Constant(value_int=axis)
-    zero = op.Constant(value_int=0)
-    axis_fixed = op.Where(op.Less(axis_const, zero), op.Add(axis_const, rank), axis_const)
-
-    # Unsqueeze to form valid axes input
-    axes = op.Unsqueeze(axis_fixed, zero)
-
-    mean = op.ReduceMean(x_sq, axes=axes, keepdims=1)
-
-    # Step 3: Epsilon tensor with correct shape and type
-    eps_scalar = op.Constant(value_float=epsilon)
-    mean_shape = op.Shape(mean)
-    eps_tensor = op.Expand(op.Reshape(eps_scalar, op.Constant(value_ints=[1])), mean_shape)
-
-    # Step 4: Add epsilon and compute reciprocal sqrt
-    var = op.Add(mean, eps_tensor)
-    rms = op.Sqrt(var)
-    inv_rms = op.Reciprocal(rms)
-
-    # Step 5: Normalize and scale
-    normalized = op.Mul(X, inv_rms)
-    Y = op.Mul(normalized, W)
-
-    return Y
+onnxruntime.capi.onnxruntime_pybind11_state.Fail: [ONNXRuntimeError] : 1 : FAIL : Node (/Mul_output_0/rmsnorm) Op (RMSNormalization) [ShapeInferenceError] Inference error(s): (op_type:Constant, node name: n4): [ShapeInferenceError] Attribute 'value_int' expect an integer.
+(op_type:Add, node name: n7): [TypeInferenceError] Input 0 expected to have type but instead is null
+(op_type:Where, node name: n8): [TypeInferenceError] Input 1 expected to have type but instead is null
+(op_type:Unsqueeze, node name: n9): [TypeInferenceError] Input 0 expected to have type but instead is null
