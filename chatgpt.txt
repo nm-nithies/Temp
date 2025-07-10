@@ -1,30 +1,12 @@
-import torch
-import torch.nn as nn
+For the RMSNormalization pattern 2 in the QwenVL decoder model, I identified the reason for the observed max_diff.
 
-class CustomRMSNormWithExtraMul(nn.Module):
-    def __init__(self, dim, eps=1e-8):
-        super().__init__()
-        self.gamma = nn.Parameter(torch.randn(dim))  # (4096,)
-        self.eps = eps
+Initially, the pattern uses a ReduceL2 op which internally applies np.sum(), whereas RMSNormalization uses np.mean() for its calculation. This mismatch in reduction functions is the root cause of the numerical difference.
 
-    def forward(self, x):
-        # x: shape (1, 1, 4096)
-        squared = x.pow(2)
-        mean = squared.mean(dim=-1, keepdim=True)  # axis=1
-        denom = torch.sqrt(mean + self.eps)
-        normed = 1 / denom
-        multiplied = x * normed  # Extra Mul(x, normed)
-        out = multiplied * self.gamma
-        return out
+To address this, we could consider writing a custom RMSNormalization op that replaces np.mean() with np.sum() during computation. I tested the pattern using np.sum() instead of np.mean() and confirmed that it can be successfully legalized.
 
-# Instantiate and test
-model = CustomRMSNormWithExtraMul(dim=4096)
-x = torch.randn(1, 1026, 4096)
-out = model(x)
+For Pattern 1 (used in LLaMA2 and LLaMA3), I tested the RMS normalization pattern and confirmed that it gets successfully legalized.
 
-# Export to ONNX
-torch.onnx.export(
-    model, x, "rmsnorm_with_extra_mul.onnx",
-    input_names=["input"], output_names=["output"],
-    opset_version=13
-)
+In the current LLaMA RMS pattern, there are Cast operations at the beginning and end of the sequence (from float16 to float32, and back). I believe this is the primary reason for the observed max_diff.
+Yvonne, could you confirm if this is correct?
+
+Also, would it be appropriate to use the --legalize-error option to handle this difference?
