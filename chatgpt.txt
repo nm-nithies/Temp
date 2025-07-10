@@ -1,1 +1,2 @@
-TypeError: '<onnxscript.values.Dynamic object at 0x7fff3ee05dd0>' is not an accepted attribute value.
+onnxruntime.capi.onnxruntime_pybind11_state.Fail: [ONNXRuntimeError] : 1 : FAIL : Node (/Mul_output_0/rmsnorm) Op (RMSNormalization) [ShapeInferenceError] Inference error(s): (op_type:CastLike, node name: n3): [TypeInferenceError] Input 1 expected to have type but instead is null
+(op_type:If, node name: n5): [ShapeInferenceError] Inference error(s): (op_type:Add, node name: n0): [TypeInferenceError] Input 0 expected to have type but instead is null
