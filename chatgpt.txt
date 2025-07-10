@@ -1,12 +1,1 @@
-@script(local)
-def RMSNormalization(X, W, axis=-1, epsilon=1e-5):
-    x_sq = op.Pow(X, 2)
-    mean = op.ReduceMean(x_sq, axes=axis, keepdims=1)
-    var = op.Add(mean, epsilon)
-    rms = op.Sqrt(var)
-    inv_rms = op.Reciprocal(rms)
-
-    Y = op.Mul(op.Mul(X, inv_rms), W)
-    return Y
-
-onnxruntime.capi.onnxruntime_pybind11_state.InvalidGraph: [ONNXRuntimeError] : 10 : INVALID_GRAPH : This is an invalid model. In Node, ("_inlfunc_RMSNormalization_n3", Add, "", -1) : ("_inlfunc_RMSNormalization_mean": tensor(float),"",) -> ("_inlfunc_RMSNormalization_var",) , Error Node (_inlfunc_RMSNormalization_n3)'s input 1 is marked single but has an empty string in the graph
+TypeError: '<onnxscript.values.Dynamic object at 0x7fff3ee05dd0>' is not an accepted attribute value.
