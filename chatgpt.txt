@@ -1,58 +1,29 @@
-
-from onnxscript import opset19 as op
-from onnxscript import script
+from onnxscript import script, opset19 as op
 from onnxscript.values import Opset
-
-from nnac.core.log import Logger
-logger = Logger("LEGALIZATION")
 
 local = Opset("snps.onnx.local", 1)
 
-
 @script(local)
-def gen_shape_channel_shuffle(input, group: int):
-    # shape1: (n, h, w, c) -> (n, h, w, group, c')
-    # n, c, h, w = op.Shape(input)
-    n = op.Shape(input, start=0, end=1)
-    c = op.Shape(input, start=1, end=2)
-    h = op.Shape(input, start=2, end=3)
-    w = op.Shape(input, start=3, end=4)
-    zero = op.Constant(value_int=0)
-    group_value = op.Constant(value_int=group)
-    group_value_unsqueeze = op.Unsqueeze(group_value, zero)
-    new_c = c / group
-    shape1 = op.Concat(n, h, w, group_value_unsqueeze, new_c, axis=0)
-    # shape2: (n, h, w, group, c') -> (n, h, w, c)
-    shape2 = op.Concat(n, h, w, c, axis=0)
-    return shape1, shape2
+def RMSNormalizations(X, W, axis: int = -1, epsilon: float = 1e-5):
+    # ----- handle axis -------------------------------------------------------
+    shape = op.Shape(X)                 # 1‑D tensor with the full shape
+    rank  = op.Size(shape)              # scalar → rank of X
 
-import numpy as np
-from onnxscript import opset19 as op
-from onnxscript import script
-from onnxscript.values import Opset
-
-from nnac.core.log import Logger
-logger = Logger("LEGALIZATION")
-
-local = Opset("snps.onnx.local", 1)
-
-
-@script(local)
-def RMSNormalizations(X, W, axis=-1 , epsilon=1e-5):
-    shape = X.shape
-    rank = len(shape)
+    # axis is a Python int literal, so we can fix negative values at *compile time*
     if axis < 0:
-        axis = axis + rank
+        axis = axis + rank              # still a Python int after this line
 
-    x_squared = np.power(X, 2)
-    x_squared_mean = np.mean(
-        x_squared, axis=tuple(range(axis, len(shape))), keepdims=True
-    )
-    rmseps = x_squared_mean + epsilon
-    rms = np.sqrt(rmseps)
-    rms_reciprocal = np.reciprocal(rms)
+    axes = tuple(range(axis, rank))     # constant list of axes to reduce
 
-    y_mat = X * rms_reciprocal
-    Y = y_mat * W
+    # ----- core computation --------------------------------------------------
+    two      = op.Constant(value_float=2.0)
+    eps_conf = op.Constant(value_float=epsilon)
 
-    return Y.astype(X.dtype)
+    x_sq  = op.Pow(X, two)                              # X²
+    mean  = op.ReduceMean(x_sq, axes=axes, keepdims=1)  # ⟨X²⟩
+    var   = op.Add(mean, eps_conf)                      # ⟨X²⟩ + ε
+    rms   = op.Sqrt(var)                                # √(⟨X²⟩ + ε)
+    inv_rms = op.Reciprocal(rms)                        # 1 / rms
+
+    Y = op.Mul(op.Mul(X, inv_rms), W)                   # (X / rms) · W
+    return Y
