@@ -1,29 +1,12 @@
-from onnxscript import script, opset19 as op
-from onnxscript.values import Opset
-
-local = Opset("snps.onnx.local", 1)
-
 @script(local)
-def RMSNormalizations(X, W, axis: int = -1, epsilon: float = 1e-5):
-    # ----- handle axis -------------------------------------------------------
-    shape = op.Shape(X)                 # 1‑D tensor with the full shape
-    rank  = op.Size(shape)              # scalar → rank of X
+def RMSNormalization(X, W, axis=-1, epsilon=1e-5):
+    x_sq = op.Pow(X, 2)
+    mean = op.ReduceMean(x_sq, axes=axis, keepdims=1)
+    var = op.Add(mean, epsilon)
+    rms = op.Sqrt(var)
+    inv_rms = op.Reciprocal(rms)
 
-    # axis is a Python int literal, so we can fix negative values at *compile time*
-    if axis < 0:
-        axis = axis + rank              # still a Python int after this line
-
-    axes = tuple(range(axis, rank))     # constant list of axes to reduce
-
-    # ----- core computation --------------------------------------------------
-    two      = op.Constant(value_float=2.0)
-    eps_conf = op.Constant(value_float=epsilon)
-
-    x_sq  = op.Pow(X, two)                              # X²
-    mean  = op.ReduceMean(x_sq, axes=axes, keepdims=1)  # ⟨X²⟩
-    var   = op.Add(mean, eps_conf)                      # ⟨X²⟩ + ε
-    rms   = op.Sqrt(var)                                # √(⟨X²⟩ + ε)
-    inv_rms = op.Reciprocal(rms)                        # 1 / rms
-
-    Y = op.Mul(op.Mul(X, inv_rms), W)                   # (X / rms) · W
+    Y = op.Mul(op.Mul(X, inv_rms), W)
     return Y
+
+onnxruntime.capi.onnxruntime_pybind11_state.InvalidGraph: [ONNXRuntimeError] : 10 : INVALID_GRAPH : This is an invalid model. In Node, ("_inlfunc_RMSNormalization_n3", Add, "", -1) : ("_inlfunc_RMSNormalization_mean": tensor(float),"",) -> ("_inlfunc_RMSNormalization_var",) , Error Node (_inlfunc_RMSNormalization_n3)'s input 1 is marked single but has an empty string in the graph
