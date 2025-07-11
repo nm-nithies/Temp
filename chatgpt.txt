@@ -1,12 +1,46 @@
-For the RMSNormalization pattern 2 in the QwenVL decoder model, I identified the reason for the observed max_diff.
-
-Initially, the pattern uses a ReduceL2 op which internally applies np.sum(), whereas RMSNormalization uses np.mean() for its calculation. This mismatch in reduction functions is the root cause of the numerical difference.
-
-To address this, we could consider writing a custom RMSNormalization op that replaces np.mean() with np.sum() during computation. I tested the pattern using np.sum() instead of np.mean() and confirmed that it can be successfully legalized.
-
+Task - 10/7/2025
+Nithies:
+ 
+RMSNormalization pattern 2:
+For the RMSNormalization pattern 2 in the QwenVL decoder model, I identified the reason for the max_diff.
+Initially, the pattern uses a ReduceL2 op which internally applies np.sum(), whereas RMSNormalization uses np.mean() for its calculation. This mismatch in reduction functions is the root cause of the numerical difference and this cannot be fused into RMSNormalization.
+ 
+Can we write a custom RMSNormalization op that replaces np.mean() with np.sum() during computation. I tested the pattern using np.sum() instead of np.mean() and confirmed that it can be successfully legalized.
+ 
+RMSNormalization pattern 1:
 For Pattern 1 (used in LLaMA2 and LLaMA3), I tested the RMS normalization pattern and confirmed that it gets successfully legalized.
-
 In the current LLaMA RMS pattern, there are Cast operations at the beginning and end of the sequence (from float16 to float32, and back). I believe this is the primary reason for the observed max_diff.
 Yvonne, could you confirm if this is correct?
-
 Also, would it be appropriate to use the --legalize-error option to handle this difference?
+
+Task - 9/7/2025
+Nithies:
+Added QwenVL_E_compress model  pattern into rms_normalization.
+Still facing max_diff issues for both llama2 and QwenVL_E_compress models after fusion. Yet to fix it .
+ 
+Yvonne Chen Can I add a separate file for onnx_custom Op in converter/onnx2mwnn or can I add it in mmcv_custom_op_registor file? which would be better?
+
+Task - 8/7/2025
+Nithies:
+Explored the possibility of fusing the QwenVL_E_compress pattern into rms_normalization.
+Added custom ops for RmsNormalization and RotaryEmbedding.
+Fixed issues in the previously added FusePrimitivesIntoRmsnorm pass and validated it with custom op.
+Due to the large model size, the process was frequently killed (disk quota exceeded). So, tested the pattern on a smaller normalization subgraph instead.
+ 
+Encountered max_diff issues and some bugs in the clean_redundant_nodes_and_initializers function, which results in the entire model being erased.
+
+Task - 6/7/2025
+Nithies:
+Faced an issue in the usage of 1D array in a single string. worked after separating .
+Resolved all MR comments.
+added boolean datatye as well and update the testcase.
+MR  - https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/1082
+ 
+Started working on rotary embedding task
+
+
+Task - 4/7/2025
+Nithies:
+Added support for 1D array values  in --legalize_replace_input_with_constant.
+MR  - https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/1082
+Started working on rotary embedding task
