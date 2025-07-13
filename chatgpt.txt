@@ -1,3 +1,3 @@
-# Use our defined local function node to represent the general pattern
-RMSNormalization is introduced in Opset 23, but the latest ONNX Runtime version 1.21.1 only supports up to Opset 22.
-This Pass will be supported once ONNX Runtime adds supports for Opset 23.
+RMSNormalization was introduced in ONNX Opset 23, but the latest ONNX Runtime version (1.21.1) currently supports only up to Opset 22.
+Therefore, this pass temporarily uses a locally defined function node to represent the general RMSNormalization pattern.
+Once ONNX Runtime adds support for Opset 23, the standard ONNX RMSNormalization operator will be used.
