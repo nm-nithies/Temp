@@ -1,3 +1,1 @@
-RMSNormalization was introduced in ONNX Opset 23, but the latest ONNX Runtime version (1.21.1) currently supports only up to Opset 22.
-Therefore, this pass temporarily uses a locally defined function node to represent the general RMSNormalization pattern.
-Once ONNX Runtime adds support for Opset 23, the standard ONNX RMSNormalization operator will be used.
+ [ONNXRuntimeError] : 1 : FAIL : Type Error: Type parameter (Tind) of Optype (Slice) bound to different types (tensor(int64) and tensor(int32) in node (ScatterND_1253_output_0/Slice2).
