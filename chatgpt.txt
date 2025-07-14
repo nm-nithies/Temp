@@ -1,1 +1,14 @@
- [ONNXRuntimeError] : 1 : FAIL : Type Error: Type parameter (Tind) of Optype (Slice) bound to different types (tensor(int64) and tensor(int32) in node (ScatterND_1253_output_0/Slice2).
+@script(local)
+def RMSNormalization(X, W, axis, epsilon: float):
+    two = op.Constant(value_int=2)
+    eps_conf = op.Constant(value_float=epsilon)
+    # axis = op.Constant(value_ints=axis)
+    x_sq = op.Pow(X, two)
+
+    mean = op.ReduceMean(x_sq, axes=axis, keepdims=1)
+    var = op.Add(mean, eps_conf)
+    rms = op.Sqrt(var)
+    inv_rms = op.Reciprocal(rms)
+
+    Y = op.Mul(op.Mul(X, inv_rms), W)
+    return Y
