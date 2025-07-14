@@ -1,3 +1,1 @@
-ReduceL2 uses np.sum(), whereas RMSNormalization internally uses ReduceMean (np.mean()) for its computation.
-To fuse ReduceL2 into RMSNormalization, the output of ReduceL2 must be adjusted by dividing it by the number of elements (i.e., converting the sum into a mean) to align with the internal behavior of RMSNormalization.
-
+OperatorSetIdProto
