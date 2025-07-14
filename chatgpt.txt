@@ -1,14 +1,3 @@
-@script(local)
-def RMSNormalization(X, W, axis, epsilon: float):
-    two = op.Constant(value_int=2)
-    eps_conf = op.Constant(value_float=epsilon)
-    # axis = op.Constant(value_ints=axis)
-    x_sq = op.Pow(X, two)
+ReduceL2 uses np.sum(), whereas RMSNormalization internally uses ReduceMean (np.mean()) for its computation.
+To fuse ReduceL2 into RMSNormalization, the output of ReduceL2 must be adjusted by dividing it by the number of elements (i.e., converting the sum into a mean) to align with the internal behavior of RMSNormalization.
 
-    mean = op.ReduceMean(x_sq, axes=axis, keepdims=1)
-    var = op.Add(mean, eps_conf)
-    rms = op.Sqrt(var)
-    inv_rms = op.Reciprocal(rms)
-
-    Y = op.Mul(op.Mul(X, inv_rms), W)
-    return Y
