@@ -1,38 +1,20 @@
-
-def replace_succs_new_node(G, old_node, new_node):
-    old_node_succs = fetch_succ_layers(G, old_node)
-    for output in old_node_succs:
-        for succ_input in range(len(G.nodes[output]["input"])):
-            if G.nodes[output]['input'][succ_input] == old_node:
-                G.nodes[output]['input'][succ_input] = new_node
-
-        G.add_edge(new_node, output)
+Updates successor inputs by replacing old_node with new_node
+ # and adds corresponding ONNX graph edges between new_node and each successor.
 
 def fetch_pred_layer0(G, layer):
-    if len(list(G.predecessors(layer))) > 0:
-        pred_layer = list(G.predecessors(layer))[0]
-        return pred_layer
-    else:
-        return None
-
-
+    # Returns the first predecessor of the given layer, if it exists.
+python
+Copy
+Edit
 def fetch_succ_layer0(G, layer):
-    if len(list(G.successors(layer))) > 0:
-        succ_layer = list(G.successors(layer))[0]
-        return succ_layer
-    else:
-        return None
-
+    # Returns the first successor of the given layer, if it exists.
+python
+Copy
+Edit
 def fetch_pred_layers(G, layer):
-    if len(list(G.predecessors(layer))) > 0:
-        pred_layers = list(G.predecessors(layer))
-        return pred_layers
-    else:
-        return []
-
+    # Returns a list of all predecessor layers of the given layer.
+python
+Copy
+Edit
 def fetch_succ_layers(G, layer):
-    if len(list(G.successors(layer))) > 0:
-        succ_layers = list(G.successors(layer))
-        return succ_layers
-    else:
-        return []
+    # Returns a list of all successor layers of the given layer.
