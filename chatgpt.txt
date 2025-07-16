@@ -1,2 +1,38 @@
-ReduceL2 uses np.sum(), whereas RMSNormalization internally uses ReduceMean (np.mean()) for its computation.
-To fuse ReduceL2 into RMSNormalization, the output of ReduceL2 must be adjusted by dividing it by the number of elements (i.e., converting the sum into a mean) to align with the internal behavior of RMSNormalization.
+
+def replace_succs_new_node(G, old_node, new_node):
+    old_node_succs = fetch_succ_layers(G, old_node)
+    for output in old_node_succs:
+        for succ_input in range(len(G.nodes[output]["input"])):
+            if G.nodes[output]['input'][succ_input] == old_node:
+                G.nodes[output]['input'][succ_input] = new_node
+
+        G.add_edge(new_node, output)
+
+def fetch_pred_layer0(G, layer):
+    if len(list(G.predecessors(layer))) > 0:
+        pred_layer = list(G.predecessors(layer))[0]
+        return pred_layer
+    else:
+        return None
+
+
+def fetch_succ_layer0(G, layer):
+    if len(list(G.successors(layer))) > 0:
+        succ_layer = list(G.successors(layer))[0]
+        return succ_layer
+    else:
+        return None
+
+def fetch_pred_layers(G, layer):
+    if len(list(G.predecessors(layer))) > 0:
+        pred_layers = list(G.predecessors(layer))
+        return pred_layers
+    else:
+        return []
+
+def fetch_succ_layers(G, layer):
+    if len(list(G.successors(layer))) > 0:
+        succ_layers = list(G.successors(layer))
+        return succ_layers
+    else:
+        return []
