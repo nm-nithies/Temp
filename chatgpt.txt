@@ -1,20 +1,19 @@
-Updates successor inputs by replacing old_node with new_node
- # and adds corresponding ONNX graph edges between new_node and each successor.
+Task - 17/7/2025
+ 
+Worked on adding rotary embedding pass.
+Resolved the MR comments for efficient_sam_vitt and repushed it .
+Created MR for fuse group normalization.
 
-def fetch_pred_layer0(G, layer):
-    # Returns the first predecessor of the given layer, if it exists.
-python
-Copy
-Edit
-def fetch_succ_layer0(G, layer):
-    # Returns the first successor of the given layer, if it exists.
-python
-Copy
-Edit
-def fetch_pred_layers(G, layer):
-    # Returns a list of all predecessor layers of the given layer.
-python
-Copy
-Edit
-def fetch_succ_layers(G, layer):
-    # Returns a list of all successor layers of the given layer.
+Task - 16/7/2025
+Fixed the idt_prechechin build_issues for convnext_model
+MR - https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/1095
+Resolved the MR comments and cleaned the code
+MR - https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/1003
+
+Task - 14/7/2025
+Fixed the Window frondend_daily build issues.
+ 
+Fixed the layernorm issue in customer model and triggered the build 
+MR - https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/1095
+Completed RMS Normalization. Integrated both patterns, pushed the code and triggered the build  
+MR - https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/1003
