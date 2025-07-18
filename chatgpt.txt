@@ -1,25 +1,73 @@
-Task - 17/7/2025
- 
-Worked on adding rotary embedding pass.
-Resolved the MR comments for efficient_sam_vitt and repushed it .
-Created MR for fuse group normalization.
+import torch
+import torch.nn as nn
 
-Task - 16/7/2025
-Fixed the idt_prechechin build_issues for convnext_model
-MR - https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/1095
-Resolved the MR comments and cleaned the code
-MR - https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/1003
+class CustomPatternModel(nn.Module):
+    def __init__(self):
+        super().__init__()
+        # Constants used in Mul
+        self.const1 = nn.Parameter(torch.randn(1, 1, 1024, 128), requires_grad=False)
+        self.const2 = nn.Parameter(torch.randn(1, 1, 1024, 128), requires_grad=False)
 
-Task - 14/7/2025
-Fixed the Window frondend_daily build issues.
- 
-Fixed the layernorm issue in customer model and triggered the build 
-MR - https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/1095
-Completed RMS Normalization. Integrated both patterns, pushed the code and triggered the build  
-MR - https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/1003
+    def forward(self, input1, input2):
+        # MatMul
+        x = torch.matmul(input1, torch.randn(4096, 4096, device=input1.device))
+
+        # Reshape: [1, 1024, 4096] → [1, 1024, 32, 128]
+        x = x.view(1, 1024, 32, 128)
+
+        # Transpose: swap axes 1 and 2 → [1, 32, 1024, 128]
+        x = x.transpose(1, 2)
+
+        # Slice1: last dim 0:64
+        slice1 = x[..., 0:64]  # shape [1, 32, 1024, 64]
+
+        # Slice2: last dim 64:128
+        slice2 = x[..., 64:128]  # shape [1, 32, 1024, 64]
+
+        # Negate slice2
+        neg_slice2 = -slice2
+
+        # Concat on last dim: [1,32,1024,128]
+        concat = torch.cat([slice1, neg_slice2], dim=-1)
+
+        # Mul with constants
+        mul1 = concat * self.const1  # broadcasted
+        mul2 = concat * self.const2  # broadcasted
+
+        # Add mul1 + mul2
+        added = mul1 + mul2  # shape [1,32,1024,128]
+
+        # Add with input2: broadcast input2 [1,32,1,128] over dim=2
+        added2 = added + input2
+
+        # Cast to float (simulating ONNX Cast)
+        cast = added2.to(torch.float32)
+
+        # Add (dummy bias)
+        bias = torch.randn_like(cast)
+        added3 = cast + bias
+
+        # Softmax on last axis
+        output = torch.softmax(added3, dim=-1)
+        return output
 
 
-Legalization error caused by fusion into BN pass
-Legalization error caused by RemoveConcatAndGather pass
-Legalization big diff caused by Softmax fusion
-Legalization error caused by Slice Op remove
+# Instantiate model and dummy inputs
+model = CustomPatternModel()
+model.eval()
+
+input1 = torch.randn(1, 1024, 4096)
+input2 = torch.randn(1, 32, 1, 128)
+
+# Export to ONNX
+torch.onnx.export(
+    model,
+    (input1, input2),
+    "pattern_model.onnx",
+    input_names=["input1", "input2"],
+    output_names=["output1"],
+    opset_version=13,
+    dynamic_axes={"input1": {0: "batch"}, "input2": {0: "batch"}, "output1": {0: "batch"}}
+)
+
+print("✓ Exported 'pattern_model.onnx'")
