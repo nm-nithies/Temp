@@ -17,3 +17,9 @@ Fixed the layernorm issue in customer model and triggered the build
 MR - https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/1095
 Completed RMS Normalization. Integrated both patterns, pushed the code and triggered the build  
 MR - https://gitsnps.internal.synopsys.com/dwc_ev/nnsdk/nnac/-/merge_requests/1003
+
+
+Legalization error caused by fusion into BN pass
+Legalization error caused by RemoveConcatAndGather pass
+Legalization big diff caused by Softmax fusion
+Legalization error caused by Slice Op remove
