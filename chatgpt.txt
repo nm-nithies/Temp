@@ -4,10 +4,32 @@ import torch.nn as nn
 class GatherUnsqueezeModel(nn.Module):
     def __init__(self):
         super().__init__()
-        self.data = nn.Parameter(torch.randn(1025, 128))  # Gather source
+        # Create constant data to gather from
+        self.data = nn.Parameter(torch.randn(1025, 128), requires_grad=False)
 
     def forward(self, indices):
-        # indices shape: [1, 1024]
-        gathered = torch.gather(self.data, 0, indices.squeeze(0))  # shape: [1024, 128]
-        gathered = gathered.unsqueeze(0).unsqueeze(1)  # shape: [1, 1, 1024, 128]
+        # indices: (1, 1024)
+        gathered = torch.gather(self.data, 0, indices.squeeze(0).long())  # (1024, 128)
+        gathered = gathered.unsqueeze(0).unsqueeze(1)  # (1, 1, 1024, 128)
         return gathered
+
+# Create model
+model = GatherUnsqueezeModel()
+model.eval()
+
+# Dummy input: indices ranging from 0 to 1024 (valid range for gather)
+dummy_input = torch.randint(0, 1025, (1, 1024), dtype=torch.long)
+
+# Export to ONNX
+torch.onnx.export(
+    model,
+    dummy_input,
+    "gather_unsqueeze.onnx",
+    input_names=["input"],
+    output_names=["output"],
+    dynamic_axes={
+        "input": {1: "seq_len"},  # make sequence length dynamic
+        "output": {2: "seq_len"}  # match seq_len in output
+    },
+    opset_version=13
+)
